@@ -1,4 +1,4 @@
-"# TPF-Grupo5-ProgramacionIII-ICOMP" 
+# TPF-Grupo5-ProgramacionIII-ICOMP" 
 # Sistema Inteligente de Gestión Logística y Distribución
 
 ## 1. Descripción del proyecto
