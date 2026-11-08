@@ -1,4 +1,3 @@
-# producto.py
 
 class Producto:
     """
