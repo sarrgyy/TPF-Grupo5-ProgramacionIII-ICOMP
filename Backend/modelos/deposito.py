@@ -3,47 +3,33 @@ class Deposito:
         self.id_deposito = id_deposito
         self.nombre = nombre
         self.ubicacion = ubicacion
-        self.capacidad = capacidad
-    def espacio_ocupado(self, volumen_ocupado):
+        self.capacidad_maxima = capacidad
+        self.volumen_ocupado = 0.0  # El depósito ahora controla internamente cuánto tiene guardado
+
+    def espacio_disponible(self):
+        """Calcula de forma dinámica el espacio libre."""
+        return self.capacidad_maxima - self.volumen_ocupado
+
+    def actualizar_capacidad(self, nueva_capacidad):
         """
-        Calcula el espacio ocupado en el depósito.
-        :param volumen_ocupado: Volumen total de productos almacenados.
-        :return: Espacio disponible en el depósito.
+        Actualiza la capacidad total (ej. ampliación del galpón).
+        Solo permite el cambio si la nueva capacidad entra en lo que ya está ocupado.
         """
-        espacio_disponible = self.capacidad - volumen_ocupado
-        if espacio_disponible < 0:
-            print(f"Advertencia: El depósito {self.nombre} está sobrecargado. Capacidad: {self.capacidad}, Volumen ocupado: {volumen_ocupado}")
-            return 0
-        return espacio_disponible
-    def actualizar_capacidad(self, nuevo_volumen):
-        """
-        Actualiza la capacidad del depósito.
-        :param nuevo_volumen: Nuevo volumen total de productos almacenados.
-        """
-        if nuevo_volumen <= self.capacidad:
-            print(f"Capacidad del depósito {self.nombre} actualizada a {nuevo_volumen}.")
+        if nueva_capacidad >= self.volumen_ocupado:
+            self.capacidad_maxima = nueva_capacidad
+            print(f"Capacidad del depósito {self.nombre} actualizada a {nueva_capacidad}.")
         else:
-            print(f"Error: No se puede actualizar la capacidad del depósito {self.nombre} a {nuevo_volumen}. Capacidad máxima: {self.capacidad}.")
+            print(f"Error: La nueva capacidad ({nueva_capacidad}) choca con el volumen ya ocupado ({self.volumen_ocupado}).")
+
     def verificar_espacio(self, volumen_requerido):
         """
-        Verifica si hay suficiente espacio en el depósito para un nuevo volumen.
-        :param volumen_requerido: Volumen que se desea almacenar.
-        :return: Booleano indicando si hay suficiente espacio.
+        Verifica si hay suficiente espacio evaluando el volumen libre real.
         """
-        if volumen_requerido <= self.capacidad:
+        if volumen_requerido <= self.espacio_disponible():
             print(f"Hay suficiente espacio en el depósito {self.nombre} para almacenar {volumen_requerido}.")
             return True
         else:
-            print(f"No hay suficiente espacio en el depósito {self.nombre} para almacenar {volumen_requerido}. Capacidad máxima: {self.capacidad}.")
+            print(f"No hay suficiente espacio en el depósito {self.nombre}. Disponible: {self.espacio_disponible()}.")
             return False
-    def obtener_informacion(self):
-        """
-        Retorna la información del depósito.
-        :return: Diccionario con la información del depósito.
-        """
-        return {
-            "id_deposito": self.id_deposito,
-            "nombre": self.nombre,
-            "ubicacion": self.ubicacion,
-            "capacidad": self.capacidad
-        }
+            
+    # Omití obtener_informacion() para respetar tu decisión de diseño de dejarlo solo en conductor.py

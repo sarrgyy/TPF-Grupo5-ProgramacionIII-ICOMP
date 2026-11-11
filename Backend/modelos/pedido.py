@@ -32,6 +32,6 @@ class Pedido:
         estados_validos = ["Pendiente", "Asignado", "En Camino", "Entregado"]
         if nuevo_estado in estados_validos:
             self.estado = nuevo_estado
-            print(f"El pedido {self.id_pedido} ahora está: {self.estado}")
+            #print(f"El pedido {self.id_pedido} ahora está: {self.estado}")
         else:
             print(f"Error: '{nuevo_estado}' no es un estado válido.")

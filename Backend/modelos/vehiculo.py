@@ -1,67 +1,58 @@
 class Vehiculo:
-    def __init__(self, patente, capacidad, estado, pedidos):
+    def __init__(self, patente, capacidad, estado="Disponible"):
         self.patente = patente
-        self.capacidad = capacidad 
+        self.capacidad_maxima = capacidad  # Mantenemos intacta la capacidad original
+        self.volumen_ocupado = 0.0         # Nueva variable para el control dinámico
         self.estado = estado
         self.pedidos = []
+        self.conductor_asignado = None     # Variable real para vincular al conductor
 
     def asignar_pedido(self, pedido):
-        if self.estado == "Disponible" and self.capacidad >= pedido.volumen_total:
+        espacio_disponible = self.capacidad_maxima - self.volumen_ocupado
+        if self.estado == "Disponible" and espacio_disponible >= pedido.volumen_total:
             self.pedidos.append(pedido)
-            self.capacidad -= pedido.volumen_total
+            self.volumen_ocupado += pedido.volumen_total  # Sumamos al volumen ocupado
             pedido.actualizar_estado("Asignado")
-            print(f"Pedido {pedido.id_pedido} asignado al vehículo {self.patente}. Capacidad restante: {self.capacidad}")
+            print(f"Pedido {pedido.id_pedido} asignado al vehículo {self.patente}. Capacidad restante: {self.capacidad_maxima - self.volumen_ocupado}")
         else:
-            print(f"No se puede asignar el pedido {pedido.id_pedido} al vehículo {self.patente}. Estado: {self.estado}, Capacidad: {self.capacidad}, Volumen del pedido: {pedido.volumen_total}")
+            print(f"No se puede asignar el pedido {pedido.id_pedido} al vehículo {self.patente}. Estado: {self.estado}, Espacio disponible: {espacio_disponible}")
 
     def actualizar_estado(self, nuevo_estado):
         estados_validos = ["Disponible", "En Ruta", "Mantenimiento"]
         if nuevo_estado in estados_validos:
             self.estado = nuevo_estado
-            print(f"El vehículo {self.patente} ahora está: {self.estado}")
+            #print(f"El vehículo {self.patente} ahora está: {self.estado}")
         else:
             print(f"Error: '{nuevo_estado}' no es un estado válido para el vehículo {self.patente}.")
 
     def liberar_pedido(self, pedido):
         if pedido in self.pedidos:
             self.pedidos.remove(pedido)
-            self.capacidad += pedido.volumen_total
+            self.volumen_ocupado -= pedido.volumen_total  # Liberamos el espacio ocupado
             pedido.actualizar_estado("Entregado")
-            print(f"Pedido {pedido.id_pedido} liberado del vehículo {self.patente}. Capacidad disponible: {self.capacidad}")
+            print(f"Pedido {pedido.id_pedido} liberado del vehículo {self.patente}. Capacidad disponible: {self.capacidad_maxima - self.volumen_ocupado}")
         else:
             print(f"Error: El pedido {pedido.id_pedido} no está asignado al vehículo {self.patente}.")
 
     def tiene_conductor(self):
-        """
-        Verifica si el vehículo tiene un conductor asignado.
-        :return: Booleano indicando si hay un conductor.
-        """
-        # Aquí se podría implementar la lógica para verificar si hay un conductor asignado.
-        # Por ahora, simplemente retornamos False como placeholder.
-        return False
+        """Verifica si el vehículo tiene un conductor asignado revisando su estado interno."""
+        return self.conductor_asignado is not None
 
     def asignar_conductor(self, conductor):
-        """
-        Asigna un conductor al vehículo.
-        :param conductor: Objeto que representa al conductor.
-        """
-        # Aquí se podría implementar la lógica para asignar un conductor al vehículo.
-        # Por ahora, simplemente imprimimos un mensaje como placeholder.
-        print(f"Conductor {conductor} asignado al vehículo {self.patente}.")
+        """Asigna un conductor al vehículo guardando la referencia."""
+        if not self.tiene_conductor():
+            self.conductor_asignado = conductor
+            print(f"Conductor asignado al vehículo {self.patente}.")
+        else:
+            print(f"Error: El vehículo {self.patente} ya tiene conductor.")
 
     def liberar_conductor(self):
-        """
-        Libera al conductor asignado del vehículo.
-        """
-        # Aquí se podría implementar la lógica para liberar al conductor del vehículo.
-        # Por ahora, simplemente imprimimos un mensaje como placeholder.
-        print(f"Conductor liberado del vehículo {self.patente}.")
+        """Libera al conductor asignado blanqueando la variable."""
+        if self.tiene_conductor():
+            print(f"Conductor liberado del vehículo {self.patente}.")
+            self.conductor_asignado = None
+        else:
+            print(f"El vehículo {self.patente} no tenía conductor asignado.")
 
     def tiene_pedido(self, pedido):
-        """
-        Verifica si el vehículo tiene un pedido específico asignado.
-        :param pedido: Objeto que representa el pedido a verificar.
-        :return: Booleano indicando si el pedido está asignado al vehículo.
-        """
         return pedido in self.pedidos
-
