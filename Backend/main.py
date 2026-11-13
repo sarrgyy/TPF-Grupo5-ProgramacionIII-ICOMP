@@ -14,7 +14,7 @@ from Backend.modelos.productos import Producto
 from Backend.modelos.vehiculo import Vehiculo
 from Backend.persistencia import InventarioSQLite
 from Backend.pedidos import PedidosSQLite
-from Backend.flota import FlotaSQLite
+from Backend.consola import ejecutar_menu, mostrar_inventario, mostrar_pedidos, mostrar_flota
 
 
 RUTA_DB = Path(__file__).resolve().with_name("logistica.db")
@@ -29,21 +29,6 @@ def cargar_ejemplo(inventario):
         [("D-001", "PRD-1", 500), ("D-001", "PRD-2", 800),
          ("D-002", "PRD-1", 100)],
     )
-
-
-def mostrar_inventario(inventario):
-    productos = inventario.listar_productos()
-    for deposito in inventario.listar_depositos():
-        print(f"\n{deposito.id_deposito} — {deposito.nombre}")
-        print(f"Volumen ocupado: {deposito.volumen_ocupado:g} / {deposito.capacidad_maxima:g}")
-        for producto in productos:
-            cantidad = inventario.stock(deposito.id_deposito, producto.id_producto)
-            reservado = inventario.stock_reservado(deposito.id_deposito, producto.id_producto)
-            print(f"  {producto.id_producto} — {producto.nombre}: físico: {cantidad}, "
-                  f"reservado: {reservado}, disponible: {cantidad - reservado}")
-    print("\n--- Totales por producto ---")
-    for producto in productos:
-        print(f"{producto.nombre}: {inventario.stock_total(producto.id_producto)} unidades")
 
 
 def simular_pedidos(inventario):
@@ -90,31 +75,12 @@ def simular_pedidos(inventario):
         print(conductor.obtener_info())
 
 
-def mostrar_flota(inventario):
-    flota = FlotaSQLite(inventario)
-    print("\n--- Vehículos guardados ---")
-    vehiculos = flota.listar_vehiculos()
-    if not vehiculos:
-        print("No hay vehículos guardados.")
-    for vehiculo in vehiculos:
-        conductor = vehiculo.conductor_asignado or "sin asignar"
-        print(f"{vehiculo.patente}: {vehiculo.estado}, "
-              f"capacidad: {vehiculo.capacidad_maxima:g}, conductor DNI: {conductor}, "
-              f"pedido activo: {vehiculo.pedido_asignado or 'ninguno'}, "
-              f"carga: {vehiculo.volumen_ocupado:g}")
-    print("\n--- Conductores guardados ---")
-    conductores = flota.listar_conductores()
-    if not conductores:
-        print("No hay conductores guardados.")
-    for conductor in conductores:
-        print(f"{conductor.dni} — {conductor.nombre}: {conductor.estado}, "
-              f"vehículo: {conductor.vehiculo_asignado or 'sin asignar'}")
-
-
 def main():
     parser = argparse.ArgumentParser(description="Inventario logístico persistente en SQLite.")
     parser.add_argument("--db", type=Path, default=RUTA_DB, help="Ruta del archivo SQLite.")
-    parser.add_argument("--simular-pedidos", action="store_true",
+    grupo = parser.add_mutually_exclusive_group()
+    grupo.add_argument("--resumen", action="store_true", help="Muestra los datos guardados y termina.")
+    grupo.add_argument("--simular-pedidos", action="store_true",
                         help="Ejecuta la demo logística sin modificar las existencias guardadas.")
     opciones = parser.parse_args()
     with InventarioSQLite(opciones.db) as inventario:
@@ -124,18 +90,14 @@ def main():
             print("Inventario vacío: se cargaron los datos de ejemplo.")
         else:
             print("Se recuperó el inventario guardado.")
-        mostrar_inventario(inventario)
-        print("\n--- Pedidos guardados ---")
-        pedidos = PedidosSQLite(inventario).listar_pedidos()
-        if not pedidos:
-            print("No hay pedidos guardados.")
-        for pedido in pedidos:
-            print(f"{pedido.id_pedido} — {pedido.cliente}: {pedido.estado}, "
-                  f"volumen: {pedido.volumen_total:g}, "
-                  f"vehículo: {pedido.vehiculo_asignado or 'sin asignar'}")
-        mostrar_flota(inventario)
-        if opciones.simular_pedidos:
-            simular_pedidos(inventario)
+        if opciones.resumen or opciones.simular_pedidos:
+            mostrar_inventario(inventario)
+            mostrar_pedidos(inventario)
+            mostrar_flota(inventario)
+            if opciones.simular_pedidos:
+                simular_pedidos(inventario)
+        else:
+            ejecutar_menu(inventario)
 
 
 if __name__ == "__main__":

@@ -22,6 +22,8 @@ class MainTests(unittest.TestCase):
         self.ruta = Path(self.temporal.name) / "inventario.db"
 
     def ejecutar(self, *opciones, script=None):
+        if "--simular-pedidos" not in opciones:
+            opciones = (*opciones, "--resumen")
         resultado = subprocess.run(
             [sys.executable, "-B", str(script or RAIZ / "Backend/main.py"),
              "--db", str(self.ruta), *opciones],
