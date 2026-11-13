@@ -10,6 +10,9 @@ from Backend.modelos.deposito import Deposito
 from Backend.modelos.productos import Producto
 from Backend.persistencia import InventarioSQLite
 from Backend.pedidos import PedidosSQLite, StockInsuficiente
+from Backend.flota import FlotaSQLite
+from Backend.modelos.conductor import Conductor
+from Backend.modelos.vehiculo import Vehiculo
 
 
 class PedidosTests(unittest.TestCase):
@@ -30,6 +33,13 @@ class PedidosTests(unittest.TestCase):
     def cargar(self, id_pedido="A"):
         self.pedidos.establecer_producto(id_pedido, "D1", "P1", 50)
         self.pedidos.establecer_producto(id_pedido, "D2", "P1", 30)
+
+    def asignar_para_despacho(self):
+        flota = FlotaSQLite(self.inv)
+        flota.registrar_vehiculo(Vehiculo("V1", 100))
+        flota.registrar_conductor(Conductor("C1", "Conductor"))
+        flota.asignar_conductor("V1", "C1")
+        self.pedidos.asignar_vehiculo("A", "V1")
 
     def test_borrador_editable_y_recuperable(self):
         self.cargar()
@@ -120,6 +130,7 @@ class PedidosTests(unittest.TestCase):
     def test_despacho_completo_unico_y_entrega(self):
         self.cargar()
         self.pedidos.confirmar("A")
+        self.asignar_para_despacho()
         # La reserva de otro pedido sigue vigente al despachar A.
         self.pedidos.crear_borrador("B", "Otro", "Destino")
         self.pedidos.establecer_producto("B", "D2", "P1", 5)
@@ -141,6 +152,7 @@ class PedidosTests(unittest.TestCase):
     def test_despacho_fallido_revierte_todos_los_movimientos(self):
         self.cargar()
         self.pedidos.confirmar("A")
+        self.asignar_para_despacho()
         # Falla de almacenamiento real en el segundo movimiento del despacho.
         self.inv.conexion.executescript("""
             CREATE TRIGGER simular_fallo BEFORE UPDATE ON existencias

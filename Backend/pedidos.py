@@ -1,6 +1,9 @@
 """Pedidos persistentes con abastecimiento manual desde varios depósitos."""
 
+import math
+
 from .modelos.pedido import Pedido
+from .flota import FlotaSQLite
 
 
 class StockInsuficiente(ValueError):
@@ -99,6 +102,7 @@ class PedidosSQLite:
         pedido = Pedido(fila["id_pedido"], fila["cliente"], fila["destino"], fila["prioridad"])
         pedido.estado = fila["estado"]
         pedido.creado_en = fila["creado_en"]
+        pedido.vehiculo_asignado = fila["patente_vehiculo"]
         pedido.productos = [dict(item) for item in self._items(id_pedido)]
         pedido.volumen_total = sum(i["cantidad"] * i["volumen_unitario"] for i in pedido.productos)
         return pedido
@@ -129,6 +133,40 @@ class PedidosSQLite:
     def _cambiar_estado(self, id_pedido, estado):
         self.conexion.execute("UPDATE pedidos SET estado = ? WHERE id_pedido = ?", (estado, id_pedido))
 
+    def _validar_vehiculo(self, pedido, patente):
+        flota = FlotaSQLite(self.inventario)
+        vehiculo = flota.obtener_vehiculo(patente)
+        if vehiculo.estado != "Disponible" or vehiculo.pedido_asignado not in (None, pedido.id_pedido):
+            raise ValueError("El vehículo debe estar Disponible y sin otro pedido activo.")
+        if vehiculo.conductor_asignado is None:
+            raise ValueError("El vehículo debe tener conductor asignado.")
+        conductor = flota.obtener_conductor(vehiculo.conductor_asignado)
+        if conductor.estado != "Asignado":
+            raise ValueError("El conductor del vehículo no está habilitado para el despacho.")
+        volumen = pedido.volumen_total
+        if (not math.isfinite(volumen)
+                or (volumen > vehiculo.capacidad_maxima
+                    and not math.isclose(volumen, vehiculo.capacidad_maxima, rel_tol=1e-12, abs_tol=0))):
+            raise ValueError("El vehículo no tiene capacidad para todo el pedido.")
+
+    def asignar_vehiculo(self, id_pedido, patente):
+        with self.inventario._transaccion():
+            self._exigir_estado(id_pedido, "Confirmado")
+            pedido = self.obtener_pedido(id_pedido)
+            if pedido.vehiculo_asignado is not None:
+                raise ValueError("Liberar el vehículo anterior antes de asignar otro.")
+            self._validar_vehiculo(pedido, patente)
+            self.conexion.execute("UPDATE pedidos SET patente_vehiculo = ? WHERE id_pedido = ?",
+                                  (patente, id_pedido))
+
+    def liberar_vehiculo(self, id_pedido):
+        with self.inventario._transaccion():
+            self._exigir_estado(id_pedido, "Confirmado")
+            if self._cabecera(id_pedido)["patente_vehiculo"] is None:
+                raise ValueError("El pedido no tiene vehículo asignado.")
+            self.conexion.execute("UPDATE pedidos SET patente_vehiculo = NULL WHERE id_pedido = ?",
+                                  (id_pedido,))
+
     def cancelar(self, id_pedido):
         with self.inventario._transaccion():
             self._exigir_estado(id_pedido, "Borrador", "Confirmado")
@@ -137,6 +175,10 @@ class PedidosSQLite:
     def despachar(self, id_pedido):
         with self.inventario._transaccion():
             self._exigir_estado(id_pedido, "Confirmado")
+            pedido = self.obtener_pedido(id_pedido)
+            if pedido.vehiculo_asignado is None:
+                raise ValueError("Asignar un vehículo antes de despachar el pedido.")
+            self._validar_vehiculo(pedido, pedido.vehiculo_asignado)
             # Libera solo las reservas propias dentro de la misma transacción.
             # Si cualquier descuento falla, se revierten estado y movimientos.
             self._cambiar_estado(id_pedido, "Despachado")
@@ -144,8 +186,15 @@ class PedidosSQLite:
                 self.inventario._modificar_stock(
                     item["id_deposito"], item["id_producto"], -item["cantidad"]
                 )
+            self.conexion.execute("UPDATE vehiculos SET estado = 'En Ruta' WHERE patente = ?",
+                                  (pedido.vehiculo_asignado,))
 
     def entregar(self, id_pedido):
         with self.inventario._transaccion():
             self._exigir_estado(id_pedido, "Despachado")
+            patente = self._cabecera(id_pedido)["patente_vehiculo"]
             self._cambiar_estado(id_pedido, "Entregado")
+            # Los pedidos despachados por versiones anteriores pueden no tener vehículo.
+            if patente is not None:
+                self.conexion.execute("UPDATE vehiculos SET estado = 'Disponible' WHERE patente = ?",
+                                      (patente,))

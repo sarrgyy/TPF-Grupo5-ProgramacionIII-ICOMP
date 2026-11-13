@@ -7,6 +7,9 @@ from pathlib import Path
 
 from Backend.persistencia import InventarioSQLite
 from Backend.pedidos import PedidosSQLite
+from Backend.flota import FlotaSQLite
+from Backend.modelos.conductor import Conductor
+from Backend.modelos.vehiculo import Vehiculo
 
 
 RAIZ = Path(__file__).resolve().parents[1]
@@ -61,11 +64,33 @@ class MainTests(unittest.TestCase):
             pedidos.crear_borrador("MANUAL-1", "Cliente", "Destino")
             pedidos.establecer_producto("MANUAL-1", "D-001", "PRD-1", 20)
             pedidos.confirmar("MANUAL-1")
+            flota = FlotaSQLite(inv)
+            flota.registrar_vehiculo(Vehiculo("ENVIO-1", 20))
+            flota.registrar_conductor(Conductor("ENVIO-C", "Conductor"))
+            flota.asignar_conductor("ENVIO-1", "ENVIO-C")
+            pedidos.asignar_vehiculo("MANUAL-1", "ENVIO-1")
         salida = self.ejecutar()
         self.assertIn("reservado: 20", salida)
         self.assertIn("disponible: 480", salida)
         self.assertIn("MANUAL-1", salida)
         self.assertIn("Confirmado", salida)
+        self.assertIn("vehículo: ENVIO-1", salida)
+        self.assertIn("pedido activo: MANUAL-1", salida)
+
+    def test_muestra_asignacion_guardada_sin_reemplazarla(self):
+        self.ejecutar()
+        with InventarioSQLite(self.ruta) as inv:
+            flota = FlotaSQLite(inv)
+            self.assertEqual(flota.listar_vehiculos(), [])
+            flota.registrar_vehiculo(Vehiculo("MANUAL-V", 25))
+            flota.registrar_conductor(Conductor("123", "Conductor manual"))
+            flota.asignar_conductor("MANUAL-V", "123")
+        salida = self.ejecutar()
+        self.assertIn("MANUAL-V", salida)
+        self.assertIn("Conductor manual", salida)
+        self.assertIn("Asignado", salida)
+        with InventarioSQLite(self.ruta) as inv:
+            self.assertEqual(FlotaSQLite(inv).obtener_conductor("123").vehiculo_asignado, "MANUAL-V")
 
 
 if __name__ == "__main__":

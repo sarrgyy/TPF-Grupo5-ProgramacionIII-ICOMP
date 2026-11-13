@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS pedidos (
     prioridad INTEGER NOT NULL CHECK (typeof(prioridad) = 'integer' AND prioridad BETWEEN 1 AND 3),
     estado TEXT NOT NULL DEFAULT 'Borrador'
         CHECK (estado IN ('Borrador', 'Confirmado', 'Despachado', 'Entregado', 'Cancelado')),
+    patente_vehiculo TEXT REFERENCES vehiculos(patente),
     creado_en TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -43,3 +44,20 @@ CREATE TABLE IF NOT EXISTS pedido_items (
 );
 
 CREATE INDEX IF NOT EXISTS pedido_items_stock ON pedido_items(id_deposito, id_producto);
+
+-- Flota: una sola referencia representa la asignación en ambos sentidos.
+CREATE TABLE IF NOT EXISTS conductores (
+    dni TEXT PRIMARY KEY NOT NULL CHECK (length(trim(dni)) > 0),
+    nombre TEXT NOT NULL CHECK (length(trim(nombre)) > 0),
+    estado TEXT NOT NULL DEFAULT 'Disponible' CHECK (estado IN ('Disponible', 'Inactivo'))
+);
+
+CREATE TABLE IF NOT EXISTS vehiculos (
+    patente TEXT PRIMARY KEY NOT NULL CHECK (length(trim(patente)) > 0),
+    capacidad_maxima REAL NOT NULL CHECK (capacidad_maxima > 0),
+    estado TEXT NOT NULL DEFAULT 'Disponible'
+        CHECK (estado IN ('Disponible', 'En Ruta', 'Mantenimiento')),
+    dni_conductor TEXT UNIQUE REFERENCES conductores(dni),
+    CHECK (estado != 'Mantenimiento' OR dni_conductor IS NULL),
+    CHECK (estado != 'En Ruta' OR dni_conductor IS NOT NULL)
+);

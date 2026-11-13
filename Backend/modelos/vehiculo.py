@@ -6,6 +6,7 @@ class Vehiculo:
         self.estado = estado
         self.pedidos = []
         self.conductor_asignado = None     # Variable real para vincular al conductor
+        self.pedido_asignado = None        # Identificador del pedido persistente activo
 
     def asignar_pedido(self, pedido):
         espacio_disponible = self.capacidad_maxima - self.volumen_ocupado

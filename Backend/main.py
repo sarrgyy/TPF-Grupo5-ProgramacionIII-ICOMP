@@ -14,6 +14,7 @@ from Backend.modelos.productos import Producto
 from Backend.modelos.vehiculo import Vehiculo
 from Backend.persistencia import InventarioSQLite
 from Backend.pedidos import PedidosSQLite
+from Backend.flota import FlotaSQLite
 
 
 RUTA_DB = Path(__file__).resolve().with_name("logistica.db")
@@ -89,6 +90,27 @@ def simular_pedidos(inventario):
         print(conductor.obtener_info())
 
 
+def mostrar_flota(inventario):
+    flota = FlotaSQLite(inventario)
+    print("\n--- Vehículos guardados ---")
+    vehiculos = flota.listar_vehiculos()
+    if not vehiculos:
+        print("No hay vehículos guardados.")
+    for vehiculo in vehiculos:
+        conductor = vehiculo.conductor_asignado or "sin asignar"
+        print(f"{vehiculo.patente}: {vehiculo.estado}, "
+              f"capacidad: {vehiculo.capacidad_maxima:g}, conductor DNI: {conductor}, "
+              f"pedido activo: {vehiculo.pedido_asignado or 'ninguno'}, "
+              f"carga: {vehiculo.volumen_ocupado:g}")
+    print("\n--- Conductores guardados ---")
+    conductores = flota.listar_conductores()
+    if not conductores:
+        print("No hay conductores guardados.")
+    for conductor in conductores:
+        print(f"{conductor.dni} — {conductor.nombre}: {conductor.estado}, "
+              f"vehículo: {conductor.vehiculo_asignado or 'sin asignar'}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Inventario logístico persistente en SQLite.")
     parser.add_argument("--db", type=Path, default=RUTA_DB, help="Ruta del archivo SQLite.")
@@ -109,7 +131,9 @@ def main():
             print("No hay pedidos guardados.")
         for pedido in pedidos:
             print(f"{pedido.id_pedido} — {pedido.cliente}: {pedido.estado}, "
-                  f"volumen: {pedido.volumen_total:g}")
+                  f"volumen: {pedido.volumen_total:g}, "
+                  f"vehículo: {pedido.vehiculo_asignado or 'sin asignar'}")
+        mostrar_flota(inventario)
         if opciones.simular_pedidos:
             simular_pedidos(inventario)
 

@@ -17,6 +17,18 @@ class InventarioSQLite:
             self.conexion.executescript(
                 Path(__file__).with_name("schema.sql").read_text(encoding="utf-8")
             )
+            # Bases anteriores conservan sus tablas y reciben solo la nueva columna.
+            with self._transaccion():
+                columnas = {fila["name"] for fila in self.conexion.execute("PRAGMA table_info(pedidos)")}
+                if "patente_vehiculo" not in columnas:
+                    self.conexion.execute(
+                        "ALTER TABLE pedidos ADD COLUMN patente_vehiculo TEXT REFERENCES vehiculos(patente)"
+                    )
+                self.conexion.execute(
+                    """CREATE UNIQUE INDEX IF NOT EXISTS pedido_vehiculo_activo
+                    ON pedidos(patente_vehiculo)
+                    WHERE estado IN ('Confirmado', 'Despachado')"""
+                )
         except Exception:
             self.close()
             raise

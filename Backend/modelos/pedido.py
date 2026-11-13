@@ -12,6 +12,7 @@ class Pedido:
         self.estado = "Pendiente"  # Estados: Pendiente, Asignado, En Camino, Entregado
         self.productos = []        # Lista para almacenar los productos del pedido
         self.volumen_total = 0.0   # Fundamental para el posterior control de capacidad de vehículos
+        self.vehiculo_asignado = None
 
     def agregar_producto(self, producto, cantidad, volumen_unitario):
         """

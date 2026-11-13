@@ -2,7 +2,7 @@
 
 Trabajo Práctico Final del **Grupo 5 — Programación III — ICOMP**.
 
-El proyecto busca centralizar la gestión de productos, depósitos, pedidos, vehículos y conductores para facilitar la distribución. Actualmente ofrece un **programa de consola en Python con inventario y pedidos persistentes en SQLite**, además de una simulación separada de asignación de pedidos a vehículos.
+El proyecto busca centralizar la gestión de productos, depósitos, pedidos, vehículos y conductores para facilitar la distribución. Actualmente ofrece un **programa de consola en Python con inventario, pedidos y flota persistentes en SQLite**, además de una simulación separada de asignación de pedidos a vehículos.
 
 ## Funcionalidades actuales
 
@@ -14,6 +14,9 @@ El proyecto busca centralizar la gestión de productos, depósitos, pedidos, veh
 - Pedidos abastecidos desde varios depósitos, elegidos manualmente.
 - Borradores editables, confirmación con reservas, cancelación, despacho completo y entrega.
 - Consulta de stock físico, reservado y disponible; retiros y traslados respetan las reservas.
+- Registro de vehículos y conductores, estados operativos y asignación manual uno a uno.
+- Asignación manual de un pedido confirmado por vehículo, con control de capacidad y conductor.
+- Despacho integrado de stock y flota; al entregar, el vehículo vuelve a estar disponible.
 - Simulación de pedidos, vehículos y conductores en memoria, sin modificar el inventario guardado.
 
 ## Tecnologías
@@ -58,19 +61,23 @@ La simulación toma una copia del stock disponible de `D-001`, respetando las re
 
 ## Diseño de la base de datos
 
-Se utiliza **una sola base** con cinco tablas, definidas en [Backend/schema.sql](Backend/schema.sql):
+Se utiliza **una sola base** con siete tablas, definidas en [Backend/schema.sql](Backend/schema.sql):
 
 | Tabla | Columnas |
 | --- | --- |
 | `productos` | `id_producto` (PK), `nombre`, `volumen_unitario`, `peso_unitario` |
 | `depositos` | `id_deposito` (PK), `nombre`, `ubicacion`, `capacidad_maxima` |
 | `existencias` | `id_deposito` (FK), `id_producto` (FK), `cantidad` |
-| `pedidos` | `id_pedido` (PK), `cliente`, `destino`, `prioridad`, `estado`, `creado_en` (UTC) |
+| `pedidos` | `id_pedido` (PK), `cliente`, `destino`, `prioridad`, `estado`, `patente_vehiculo` (FK, opcional), `creado_en` (UTC) |
 | `pedido_items` | `id_pedido` (FK), `id_deposito` (FK), `id_producto` (FK), `cantidad` |
+| `conductores` | `dni` (PK), `nombre`, `estado` |
+| `vehiculos` | `patente` (PK), `capacidad_maxima`, `estado`, `dni_conductor` (FK, UNIQUE, opcional) |
 
 La clave primaria de `existencias` es la pareja `(id_deposito, id_producto)`. Un producto puede estar en varios depósitos y un depósito puede contener varios productos.
 
 La clave primaria de `pedido_items` es `(id_pedido, id_deposito, id_producto)`. La cantidad solicitada de un producto es la suma de lo asignado manualmente a cada depósito. Las tablas nuevas se crean automáticamente al abrir una base anterior y se conservan sus datos de inventario.
+
+Al abrir una base anterior, `InventarioSQLite` agrega la columna `pedidos.patente_vehiculo` si falta y crea el índice único parcial `pedido_vehiculo_activo`. Este índice permite un solo pedido Confirmado o Despachado por vehículo; los pedidos cancelados o entregados conservan la patente como referencia histórica sin ocuparlo. La migración no reemplaza tablas ni borra datos.
 
 - Las cantidades son enteras no negativas; peso, volumen y capacidad deben ser positivos y finitos.
 - El volumen ocupado se calcula sumando `cantidad × volumen_unitario` de todos los productos del depósito; no se guarda un total duplicado.
@@ -117,8 +124,8 @@ El flujo persistente es `Borrador → Confirmado → Despachado → Entregado`.
 
 - **Borrador:** permite editar cliente, destino, prioridad y productos por depósito. No reserva stock; no puede confirmarse vacío.
 - **Confirmado:** valida todas las cantidades contra el stock disponible. Si falta mercadería, informa todos los faltantes, conserva el borrador y no reserva nada. Si alcanza, activa todas las reservas; ya no permite editar el pedido.
-- **Despachado:** descuenta las cantidades físicas de todos los depósitos y consume las reservas en una sola transacción. Una falla revierte todos los movimientos y deja el pedido Confirmado. No permite un segundo despacho.
-- **Entregado:** registra la finalización de un pedido Despachado, sin descontar stock nuevamente.
+- **Despachado:** requiere un vehículo asignado, Disponible, con conductor y capacidad para el pedido completo. Descuenta las cantidades físicas de todos los depósitos, consume reservas y marca el vehículo En Ruta en una sola transacción. Una falla revierte todos los cambios. No permite un segundo despacho.
+- **Entregado:** registra la finalización de un pedido Despachado y devuelve el vehículo a Disponible, sin descontar stock nuevamente. Conserva su conductor.
 - **Cancelado:** solo se alcanza desde Borrador o Confirmado. Libera las reservas sin descontar mercadería y conserva el detalle. Para reemplazar un pedido confirmado, cancelarlo y crear otro con un identificador nuevo.
 
 `stock()` indica la cantidad física, `stock_reservado()` lo comprometido en pedidos Confirmados y `stock_disponible()` la diferencia. Las reservas se calculan desde el estado del pedido y sus ítems; no se duplican en otra tabla. La mercadería reservada sigue ocupando espacio en el depósito y no se puede retirar ni trasladar para otro uso.
@@ -137,6 +144,9 @@ Luego, en la consola Python, ejecutar cada bloque en orden:
 ```python
 from Backend.persistencia import InventarioSQLite
 from Backend.pedidos import PedidosSQLite, StockInsuficiente
+from Backend.flota import FlotaSQLite
+from Backend.modelos.vehiculo import Vehiculo
+from Backend.modelos.conductor import Conductor
 
 inv = InventarioSQLite("prueba_pedidos.db")
 pedidos = PedidosSQLite(inv)
@@ -150,11 +160,18 @@ print(inv.stock("D-001", "PRD-1"))
 print(inv.stock_reservado("D-001", "PRD-1"))
 print(inv.stock_disponible("D-001", "PRD-1"))
 
+# El pedido completo ocupa 40 unidades de volumen.
+flota = FlotaSQLite(inv)
+flota.registrar_vehiculo(Vehiculo("REP-1", 40.0))
+flota.registrar_conductor(Conductor("30111222", "Carlos Gómez"))
+flota.asignar_conductor("REP-1", "30111222")
+pedidos.asignar_vehiculo("MANUAL-1", "REP-1")
 pedidos.despachar("MANUAL-1")
 # Quedan 450 unidades físicas en D-001 y 70 en D-002.
 print(inv.stock("D-001", "PRD-1"), inv.stock("D-002", "PRD-1"))
 pedidos.entregar("MANUAL-1")
 print(pedidos.obtener_pedido("MANUAL-1").estado)  # Entregado
+print(flota.obtener_vehiculo("REP-1").estado)     # Disponible
 inv.close()
 exit()
 ```
@@ -163,7 +180,64 @@ Al ejecutar de nuevo `python Backend/main.py --db prueba_pedidos.db`, deben apar
 
 Para editar un borrador, usar `editar_borrador(id_pedido, cliente, destino, prioridad)` y `establecer_producto(...)`, que reemplaza la cantidad de esa pareja depósito/producto. `quitar_producto(id_pedido, id_deposito, id_producto)` elimina una asignación. `cancelar(id_pedido)` cancela un borrador o confirmado. `StockInsuficiente` es un `ValueError` cuyo atributo `faltantes` contiene producto, depósito, unidades solicitadas, disponibles y faltantes.
 
+### Asignación del pedido a un vehículo
+
+`pedidos.asignar_vehiculo(id_pedido, patente)` se usa después de confirmar. El pedido completo debe caber en un solo vehículo, aunque la mercadería provenga de varios depósitos. La asignación no despacha ni descuenta stock, pero ocupa el vehículo para ese pedido.
+
+Para cambiar de vehículo antes del despacho, usar `pedidos.liberar_vehiculo(id_pedido)` y asignar otro. Esto mantiene las reservas de mercadería. Cancelar el pedido libera tanto sus reservas como la ocupación del vehículo. Mientras haya un pedido activo no se puede cambiar el conductor ni alterar manualmente el estado del vehículo: sus estados se coordinan con `despachar()` y `entregar()`.
+
+Las consultas exponen `pedido.vehiculo_asignado` (también para pedidos terminados), `vehiculo.pedido_asignado` (solo el pedido activo) y `vehiculo.volumen_ocupado` (carga de un pedido Despachado; cero antes del despacho o después de entregar). No se planifican todavía el recorrido ni la recolección en cada depósito. Los pedidos que ya estaban Despachados sin vehículo en versiones anteriores pueden marcarse Entregados; todo despacho nuevo exige asignación.
+
 Los objetos devueltos por `obtener_pedido()` y `listar_pedidos()` son copias para consulta. Las transiciones persistentes se realizan con `PedidosSQLite`; los estados de la antigua simulación de flota siguen siendo independientes.
+
+## Vehículos y conductores
+
+`FlotaSQLite` guarda vehículos, conductores y la asignación actual. Se utiliza una sola referencia: `vehiculos.dni_conductor`. La restricción `UNIQUE` impide asignar un mismo conductor a dos vehículos. Al consultar un conductor se obtiene su vehículo y se calcula su estado `Asignado`; no se guarda esa relación dos veces.
+
+- Un vehículo Disponible sin conductor se puede vincular a un conductor Disponible sin vehículo.
+- Para cambiar de conductor o vehículo, primero se debe liberar la asignación anterior. Repetir una asignación se rechaza.
+- Un conductor asignado no puede pasar a Inactivo: primero se libera la asignación. `Asignado` se obtiene automáticamente al asignar, no se establece manualmente.
+- Un vehículo asignado no puede pasar a Mantenimiento hasta liberar al conductor.
+- Se conserva el estado En Ruta: requiere conductor y debe volver a Disponible antes de liberar la asignación. Todavía no representa una entidad de viaje.
+- El registro recibe vehículos sin carga ni conductor y conductores sin vehículo. La asignación se realiza mediante el método persistente.
+- La capacidad usa la misma unidad de volumen que los productos. Los identificadores y nombres no pueden estar vacíos; la capacidad debe ser positiva y finita.
+
+La consola muestra la flota guardada, su pedido activo y su carga, pero no carga vehículos ni conductores de ejemplo automáticamente. La opción `--simular-pedidos` conserva su flota ficticia en memoria y no altera las asignaciones reales.
+
+### Prueba manual de flota
+
+Desde la raíz del proyecto, crear una base separada y abrir Python:
+
+```bash
+python Backend/main.py --db prueba_flota.db
+python
+```
+
+En la consola Python:
+
+```python
+from Backend.persistencia import InventarioSQLite
+from Backend.flota import FlotaSQLite
+from Backend.modelos.vehiculo import Vehiculo
+from Backend.modelos.conductor import Conductor
+
+inv = InventarioSQLite("prueba_flota.db")
+flota = FlotaSQLite(inv)
+flota.registrar_vehiculo(Vehiculo("AB123CD", 20.0))
+flota.registrar_conductor(Conductor("30111222", "Carlos Gómez"))
+flota.asignar_conductor("AB123CD", "30111222")
+
+print(flota.obtener_vehiculo("AB123CD").conductor_asignado)  # 30111222 (DNI)
+print(flota.obtener_conductor("30111222").obtener_info())   # Asignado, AB123CD
+inv.close()
+exit()
+```
+
+Volver a ejecutar `python Backend/main.py --db prueba_flota.db`: debe aparecer la asignación guardada. Los identificadores registrados no se pueden repetir; para repetir el ejemplo usar una base nueva o identificadores nuevos.
+
+Con una conexión abierta, `flota.liberar_conductor("AB123CD")` libera ambos lados de la asignación. Después se puede usar `flota.actualizar_estado_vehiculo("AB123CD", "Mantenimiento")` o `flota.actualizar_estado_conductor("30111222", "Inactivo")`. Para reasignar, ambos recursos deben volver a Disponible.
+
+Los métodos de `FlotaSQLite` guardan los cambios. Los objetos devueltos por `obtener_vehiculo()`, `obtener_conductor()` y sus listados son copias: los métodos de los modelos operan en memoria. El pedido persistente activo se consulta con `pedido_asignado`; la lista `pedidos` del antiguo modelo se conserva para la simulación en memoria.
 
 ## Estructura
 
@@ -174,6 +248,7 @@ Los objetos devueltos por `obtener_pedido()` y `listar_pedidos()` son copias par
 │   ├── main.py              # Inventario y simulación opcional
 │   ├── persistencia.py      # Acceso a SQLite y reglas de inventario
 │   ├── pedidos.py           # Borradores, reservas y transiciones de pedidos
+│   ├── flota.py             # Vehículos, conductores y asignaciones persistentes
 │   ├── schema.sql          # Tablas, claves y restricciones
 │   └── modelos/
 │       ├── conductor.py
@@ -195,15 +270,15 @@ Desde la raíz del repositorio:
 python -B -m unittest discover -s tests -v
 ```
 
-Cubren recuperación de datos, existencias por depósito, capacidad, validaciones, traslados, rollback, reservas, estados de pedidos, confirmaciones concurrentes y compatibilidad con la base anterior. Utilizan archivos temporales y no modifican la base de uso habitual.
+Cubren recuperación de datos, existencias por depósito, capacidad, validaciones, traslados, rollback, reservas, estados de pedidos, confirmaciones concurrentes, flota, conflictos de asignación, despacho integrado y migración de bases anteriores. Utilizan archivos temporales y no modifican la base de uso habitual.
 
 ## Alcance y próximas etapas
 
-Esta etapa persiste **productos, depósitos, existencias y pedidos**. No incluye edición de características de productos/depósitos ni bajas desde la capa de persistencia; los objetos recuperados son copias de los datos y modificarlos directamente no actualiza la base. Los métodos del modelo `Deposito` operan sobre esa copia en memoria.
+Esta etapa persiste **productos, depósitos, existencias, pedidos, vehículos, conductores y sus asignaciones**. No incluye edición de características de productos/depósitos ni bajas desde la capa de persistencia; los objetos recuperados son copias de los datos y modificarlos directamente no actualiza la base. Los métodos del modelo `Deposito` operan sobre esa copia en memoria.
 
 Queda pendiente discutir e implementar, por separado:
 
-- Persistencia de vehículos, conductores y sus asignaciones.
+- Planificación de viajes, recorridos y recolección en varios depósitos.
 - Entidades de entrega, despachos parciales, devoluciones e historial detallado de movimientos.
 - Interfaz web y API REST.
 - Priorización, restricciones por peso, optimización de rutas y reportes.
