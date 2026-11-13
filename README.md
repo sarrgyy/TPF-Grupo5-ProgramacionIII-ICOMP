@@ -6,6 +6,7 @@ El proyecto busca centralizar la gestión de productos, depósitos, pedidos, veh
 
 ## Funcionalidades actuales
 
+- Menú interactivo para operar inventario, pedidos y flota sin escribir código Python.
 - Registro y recuperación de productos y depósitos.
 - Stock independiente de cada producto en cada depósito y consulta del total.
 - Ingresos y retiros de mercadería con control de stock y capacidad.
@@ -35,7 +36,7 @@ python Backend/main.py
 
 En Windows se puede reemplazar `python` por `py`; en otros sistemas, por `python3` si corresponde.
 
-El programa crea automáticamente `Backend/logistica.db` y muestra el inventario. La ruta predeterminada es independiente de la carpeta desde la que se ejecute. Si la base está vacía, carga este escenario inicial:
+El programa crea automáticamente `Backend/logistica.db` y abre el menú principal. La ruta predeterminada es independiente de la carpeta desde la que se ejecute. Si la base está vacía, carga este escenario inicial:
 
 | Depósito | Producto | Cantidad |
 | --- | --- | ---: |
@@ -43,7 +44,7 @@ El programa crea automáticamente `Backend/logistica.db` y muestra el inventario
 | D-001 — Base Bariloche | PRD-2 — Bolsas de Harina | 800 |
 | D-002 — Depósito Centro | PRD-1 — Cajas de Leche | 100 |
 
-Los siguientes arranques recuperan los datos existentes, sin reponer ni descontar stock automáticamente, y muestran los pedidos guardados. No hay menú interactivo en esta etapa; las operaciones de inventario y pedidos se utilizan desde Python, como en los ejemplos de abajo.
+Los siguientes arranques recuperan los datos existentes, sin reponer ni descontar stock automáticamente. Las consultas de inventario, pedidos y flota están disponibles desde sus respectivos menús.
 
 Para utilizar otro archivo (su carpeta debe existir):
 
@@ -51,13 +52,53 @@ Para utilizar otro archivo (su carpeta debe existir):
 python Backend/main.py --db mi_inventario.db
 ```
 
-Para ejecutar también la simulación de pedidos:
+Para consultar todos los datos y terminar sin abrir el menú:
+
+```bash
+python Backend/main.py --resumen
+```
+
+Para ejecutar la simulación de pedidos y terminar sin abrir el menú:
 
 ```bash
 python Backend/main.py --simular-pedidos
 ```
 
 La simulación toma una copia del stock disponible de `D-001`, respetando las reservas existentes. Con los datos iniciales, `P-100` tiene volumen 16.0 y se asigna a `AB123CD`; `P-101` tiene volumen 25.0 y no encuentra vehículo con capacidad suficiente. El stock simulado termina en 430 cajas de leche y 770 bolsas de harina, pero **la base conserva sus existencias originales**. Esta simulación no crea pedidos persistentes ni realiza movimientos reales de mercadería.
+
+`--resumen` y `--simular-pedidos` no se combinan entre sí. Ambas opciones admiten `--db`.
+
+## Uso del menú
+
+| Menú principal | Operaciones |
+| --- | --- |
+| `1. Inventario` | Consultar existencias y productos; registrar productos y depósitos; ingresar, retirar y trasladar mercadería. |
+| `2. Pedidos` | Listar y consultar detalle; crear y editar borradores; establecer o quitar productos por depósito; confirmar, cancelar, asignar o liberar vehículo, despachar y entregar. |
+| `3. Flota` | Consultar vehículos y conductores; registrarlos; asignar o liberar conductor; cambiar estados operativos. |
+| `0. Salir` | Cerrar el programa. |
+
+Dentro de un submenú, `0` vuelve al principal. Durante una carga, escribir `/volver` cancela esa operación. Los campos requeridos no pueden quedar vacíos; la prioridad acepta Enter para usar 1. Las cantidades son enteros positivos y las medidas admiten coma o punto decimal. Para retirar mercadería, ingresar la cantidad positiva: el menú realiza el descuento.
+
+Cada operación exitosa se guarda inmediatamente. Si hay un error de stock, capacidad, identificador o estado, se informa y se vuelve al submenú. Las operaciones guardadas anteriormente se conservan. Al cerrar la entrada de consola o usar Ctrl+C se termina la sesión sin guardar un formulario incompleto.
+
+### Primera prueba completa por menú
+
+Para mantener la prueba separada del inventario habitual, usar un archivo nuevo:
+
+```bash
+python Backend/main.py --db prueba_menu.db
+```
+
+1. Entrar a **Flota**. Registrar el vehículo `V-1` con capacidad `40` y el conductor `C-1`, nombre `Carlos`. Asignar `C-1` a `V-1`. Volver al principal con `0`.
+2. Entrar a **Pedidos**. Crear el borrador `PED-1`, cliente `Almacén Sur`, destino `Mitre 200`, prioridad `1`.
+3. Elegir **Establecer producto y cantidad por depósito** dos veces: `PED-1`, `D-001`, `PRD-1`, `50`; luego `PED-1`, `D-002`, `PRD-1`, `30`.
+4. Consultar el detalle y confirmar el pedido. Quedan reservadas las 80 cajas, sin descontarlas físicamente todavía.
+5. Asignar el vehículo `V-1` al pedido `PED-1`. Despacharlo: pasa a Despachado y el vehículo a En Ruta.
+6. Marcar el pedido Entregado. El vehículo vuelve a Disponible conservando al conductor.
+7. Volver al principal y consultar Inventario: si el archivo era nuevo, quedan `450` cajas de leche en `D-001` y `70` en `D-002`.
+8. Salir con `0` desde el principal y ejecutar de nuevo con el mismo `--db`: los cambios deben conservarse.
+
+Para repetir la carga, usar identificadores nuevos o un archivo de prueba nuevo. La aplicación no repone automáticamente existencias ni sobrescribe registros repetidos.
 
 ## Diseño de la base de datos
 
@@ -88,7 +129,7 @@ Al abrir una base anterior, `InventarioSQLite` agrega la columna `pedidos.patent
 
 `Producto` contiene únicamente las características del producto. El antiguo `Producto.actualizar_stock()` se reemplazó por `InventarioSQLite.actualizar_stock()`, que exige indicar el depósito.
 
-## Uso del inventario desde Python
+## Uso del inventario desde Python (opcional)
 
 Después de ejecutar el programa una vez, este ejemplo puede ejecutarse desde una consola Python ubicada en la raíz del repositorio:
 
@@ -135,7 +176,7 @@ El flujo persistente es `Borrador → Confirmado → Despachado → Entregado`.
 Para probar en un archivo separado, ejecutar desde la raíz:
 
 ```bash
-python Backend/main.py --db prueba_pedidos.db
+python Backend/main.py --db prueba_pedidos.db --resumen
 python
 ```
 
@@ -176,7 +217,7 @@ inv.close()
 exit()
 ```
 
-Al ejecutar de nuevo `python Backend/main.py --db prueba_pedidos.db`, deben aparecer las cantidades modificadas y el pedido Entregado. Para repetir la carga, usar un identificador de pedido nuevo; los ejemplos no reponen existencias existentes.
+Al ejecutar de nuevo `python Backend/main.py --db prueba_pedidos.db --resumen`, deben aparecer las cantidades modificadas y el pedido Entregado. Para repetir la carga, usar un identificador de pedido nuevo; los ejemplos no reponen existencias existentes.
 
 Para editar un borrador, usar `editar_borrador(id_pedido, cliente, destino, prioridad)` y `establecer_producto(...)`, que reemplaza la cantidad de esa pareja depósito/producto. `quitar_producto(id_pedido, id_deposito, id_producto)` elimina una asignación. `cancelar(id_pedido)` cancela un borrador o confirmado. `StockInsuficiente` es un `ValueError` cuyo atributo `faltantes` contiene producto, depósito, unidades solicitadas, disponibles y faltantes.
 
@@ -209,7 +250,7 @@ La consola muestra la flota guardada, su pedido activo y su carga, pero no carga
 Desde la raíz del proyecto, crear una base separada y abrir Python:
 
 ```bash
-python Backend/main.py --db prueba_flota.db
+python Backend/main.py --db prueba_flota.db --resumen
 python
 ```
 
@@ -233,7 +274,7 @@ inv.close()
 exit()
 ```
 
-Volver a ejecutar `python Backend/main.py --db prueba_flota.db`: debe aparecer la asignación guardada. Los identificadores registrados no se pueden repetir; para repetir el ejemplo usar una base nueva o identificadores nuevos.
+Volver a ejecutar `python Backend/main.py --db prueba_flota.db --resumen`: debe aparecer la asignación guardada. Los identificadores registrados no se pueden repetir; para repetir el ejemplo usar una base nueva o identificadores nuevos.
 
 Con una conexión abierta, `flota.liberar_conductor("AB123CD")` libera ambos lados de la asignación. Después se puede usar `flota.actualizar_estado_vehiculo("AB123CD", "Mantenimiento")` o `flota.actualizar_estado_conductor("30111222", "Inactivo")`. Para reasignar, ambos recursos deben volver a Disponible.
 
@@ -246,6 +287,7 @@ Los métodos de `FlotaSQLite` guardan los cambios. Los objetos devueltos por `ob
 ├── Informe.md
 ├── Backend/
 │   ├── main.py              # Inventario y simulación opcional
+│   ├── consola.py           # Menú interactivo y consultas compartidas
 │   ├── persistencia.py      # Acceso a SQLite y reglas de inventario
 │   ├── pedidos.py           # Borradores, reservas y transiciones de pedidos
 │   ├── flota.py             # Vehículos, conductores y asignaciones persistentes
@@ -270,7 +312,7 @@ Desde la raíz del repositorio:
 python -B -m unittest discover -s tests -v
 ```
 
-Cubren recuperación de datos, existencias por depósito, capacidad, validaciones, traslados, rollback, reservas, estados de pedidos, confirmaciones concurrentes, flota, conflictos de asignación, despacho integrado y migración de bases anteriores. Utilizan archivos temporales y no modifican la base de uso habitual.
+Cubren recuperación de datos, existencias por depósito, capacidad, validaciones, traslados, rollback, reservas, estados de pedidos, confirmaciones concurrentes, flota, conflictos de asignación, despacho integrado, migración de bases anteriores y operaciones completas desde el menú con entrada real por consola. Utilizan archivos temporales y no modifican la base de uso habitual.
 
 ## Alcance y próximas etapas
 
