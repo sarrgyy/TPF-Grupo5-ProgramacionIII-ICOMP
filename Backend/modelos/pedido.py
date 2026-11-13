@@ -9,9 +9,9 @@ class Pedido:
         self.cliente = cliente
         self.destino = destino
         self.prioridad = prioridad
-        self.estado = "Pendiente"  # Estados: Pendiente, Asignado, En Camino, Entregado
-        self.productos = []        # Lista para almacenar los productos del pedido
-        self.volumen_total = 0.0   # Fundamental para el posterior control de capacidad de vehículos
+        self.estado = "Pendiente"  
+        self.productos = []        
+        self.volumen_total = 0.0   
 
     def agregar_producto(self, producto, cantidad, volumen_unitario):
         """
@@ -32,6 +32,5 @@ class Pedido:
         estados_validos = ["Pendiente", "Asignado", "En Camino", "Entregado"]
         if nuevo_estado in estados_validos:
             self.estado = nuevo_estado
-            #print(f"El pedido {self.id_pedido} ahora está: {self.estado}")
         else:
             print(f"Error: '{nuevo_estado}' no es un estado válido.")

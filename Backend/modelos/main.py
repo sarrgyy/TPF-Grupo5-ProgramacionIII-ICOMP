@@ -1,7 +1,5 @@
 # main.py
 
-# Importamos las clases que modelamos en la Fase 1
-# Asegúrate de que los nombres de los archivos coincidan con los de tu proyecto local
 from deposito import deposito
 from producto import Producto
 from vehiculo import Vehiculo
@@ -40,7 +38,7 @@ def main():
     
     # Agregamos productos al pedido 01
     cant_leche_p1 = 20
-    if prod_leche.actualizar_stock(-cant_leche_p1):  # Restamos del inventario usando comportamiento interno
+    if prod_leche.actualizar_stock(-cant_leche_p1): 
         pedido_01.agregar_producto(prod_leche.nombre, cant_leche_p1, prod_leche.volumen_unitario)
         
     cant_harina_p1 = 30
@@ -52,7 +50,7 @@ def main():
     if prod_leche.actualizar_stock(-cant_leche_p2):
         pedido_02.agregar_producto(prod_leche.nombre, cant_leche_p2, prod_leche.volumen_unitario)
 
-    # 4. Lógica Imperativa de Asignación (Core de Fase 2)
+    # 4. Lógica Imperativa de Asignación
     print("\n[4] EJECUTANDO ALGORITMO DE ASIGNACIÓN IMPERATIVA")
     pedidos_pendientes = [pedido_01, pedido_02]
     flota_disponible = [furgon_1, camioneta_1]
@@ -65,7 +63,7 @@ def main():
             if vehiculo.estado == "Disponible" and espacio_libre >= pedido.volumen_total:
                 vehiculo.asignar_pedido(pedido)
                 asignado = True
-                break  # Pasamos al siguiente pedido en cuanto lo logramos asignar
+                break 
         
         if not asignado:
             print(f"Alerta: No se encontró vehículo con capacidad suficiente para el pedido {pedido.id_pedido}.")

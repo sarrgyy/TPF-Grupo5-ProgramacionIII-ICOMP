@@ -15,7 +15,7 @@ class Conductor:
         self.nombre = nombre
         
         # Estado dinámico del objeto
-        self.estado = "Disponible"  # Estados válidos: Disponible, Asignado, Inactivo
+        self.estado = "Disponible"  
         self.vehiculo_asignado = None
 
     def actualizar_estado(self, nuevo_estado):

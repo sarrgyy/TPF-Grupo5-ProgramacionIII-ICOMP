@@ -1,17 +1,17 @@
 class Vehiculo:
     def __init__(self, patente, capacidad, estado="Disponible"):
         self.patente = patente
-        self.capacidad_maxima = capacidad  # Mantenemos intacta la capacidad original
-        self.volumen_ocupado = 0.0         # Nueva variable para el control dinámico
+        self.capacidad_maxima = capacidad  
+        self.volumen_ocupado = 0.0         
         self.estado = estado
         self.pedidos = []
-        self.conductor_asignado = None     # Variable real para vincular al conductor
+        self.conductor_asignado = None     
 
     def asignar_pedido(self, pedido):
         espacio_disponible = self.capacidad_maxima - self.volumen_ocupado
         if self.estado == "Disponible" and espacio_disponible >= pedido.volumen_total:
             self.pedidos.append(pedido)
-            self.volumen_ocupado += pedido.volumen_total  # Sumamos al volumen ocupado
+            self.volumen_ocupado += pedido.volumen_total  
             pedido.actualizar_estado("Asignado")
             print(f"Pedido {pedido.id_pedido} asignado al vehículo {self.patente}. Capacidad restante: {self.capacidad_maxima - self.volumen_ocupado}")
         else:
@@ -21,14 +21,14 @@ class Vehiculo:
         estados_validos = ["Disponible", "En Ruta", "Mantenimiento"]
         if nuevo_estado in estados_validos:
             self.estado = nuevo_estado
-            #print(f"El vehículo {self.patente} ahora está: {self.estado}")
+            
         else:
             print(f"Error: '{nuevo_estado}' no es un estado válido para el vehículo {self.patente}.")
 
     def liberar_pedido(self, pedido):
         if pedido in self.pedidos:
             self.pedidos.remove(pedido)
-            self.volumen_ocupado -= pedido.volumen_total  # Liberamos el espacio ocupado
+            self.volumen_ocupado -= pedido.volumen_total 
             pedido.actualizar_estado("Entregado")
             print(f"Pedido {pedido.id_pedido} liberado del vehículo {self.patente}. Capacidad disponible: {self.capacidad_maxima - self.volumen_ocupado}")
         else:

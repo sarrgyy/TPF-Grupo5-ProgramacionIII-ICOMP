@@ -4,7 +4,7 @@ class Deposito:
         self.nombre = nombre
         self.ubicacion = ubicacion
         self.capacidad_maxima = capacidad
-        self.volumen_ocupado = 0.0  # El depósito ahora controla internamente cuánto tiene guardado
+        self.volumen_ocupado = 0.0  
 
     def espacio_disponible(self):
         """Calcula de forma dinámica el espacio libre."""
@@ -32,4 +32,3 @@ class Deposito:
             print(f"No hay suficiente espacio en el depósito {self.nombre}. Disponible: {self.espacio_disponible()}.")
             return False
             
-    # Omití obtener_informacion() para respetar tu decisión de diseño de dejarlo solo en conductor.py
