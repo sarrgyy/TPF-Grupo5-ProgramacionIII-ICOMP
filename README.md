@@ -322,8 +322,7 @@ Los métodos de `FlotaSQLite` guardan los cambios. Los objetos devueltos por `ob
 │       ├── pedido.py
 │       ├── productos.py
 │       └── vehiculo.py
-├── tests/                  # Pruebas con SQLite real y archivos temporales
-└── docs/superpowers/        # Decisiones de diseño y planes de implementación
+└── tests/                  # Pruebas con SQLite real y archivos temporales
 ```
 
 ## Organización del código y documentación
