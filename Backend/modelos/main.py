@@ -1,4 +1,8 @@
-"""Acceso compatible al punto de entrada actual del proyecto."""
+"""Delega el acceso anterior al punto de entrada Backend/main.py.
+
+Admite los mismos argumentos y menús que main.py. No conserva otra copia
+de las reglas de negocio ni abre una base distinta.
+"""
 
 from pathlib import Path
 from runpy import run_path

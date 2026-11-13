@@ -4,6 +4,20 @@ Trabajo Práctico Final del **Grupo 5 — Programación III — ICOMP**.
 
 El proyecto busca centralizar la gestión de productos, depósitos, pedidos, vehículos y conductores para facilitar la distribución. Actualmente ofrece un **programa de consola en Python con inventario, pedidos y flota persistentes en SQLite**, además de una simulación separada de asignación de pedidos a vehículos.
 
+## Estado actual
+
+La versión actual permite completar una distribución desde el menú: registrar mercadería y flota, crear un pedido con productos de varios depósitos, reservar stock, asignar un vehículo, despachar y registrar la entrega. Los datos se conservan entre ejecuciones en una sola base SQLite local.
+
+| Componente | Estado |
+| --- | --- |
+| Menú de consola | Operativo para inventario, pedidos y flota. |
+| Inventario | Stock por depósito, capacidad, ingresos, retiros y traslados. |
+| Pedidos | Borrador editable, confirmación completa, reservas y cancelación. |
+| Distribución | Un pedido activo por vehículo, despacho atómico y liberación al entregar. |
+| Persistencia | Siete tablas, claves foráneas y migración aditiva de bases anteriores. |
+| Verificación | 56 pruebas automatizadas con SQLite real y archivos temporales. |
+| Interfaz web y API REST | Pendientes; el acceso actual es por consola o desde Python. |
+
 ## Funcionalidades actuales
 
 - Menú interactivo para operar inventario, pedidos y flota sin escribir código Python.
@@ -129,6 +143,14 @@ Al abrir una base anterior, `InventarioSQLite` agrega la columna `pedidos.patent
 
 `Producto` contiene únicamente las características del producto. El antiguo `Producto.actualizar_stock()` se reemplazó por `InventarioSQLite.actualizar_stock()`, que exige indicar el depósito.
 
+### Identificadores y unidades
+
+Los campos de identificación reciben solo el identificador, no el nombre que aparece junto a él. Por ejemplo, ante `D-001 — Base Bariloche`, ingresar `D-001`; ante `PRD-1 — Cajas de Leche`, ingresar `PRD-1`.
+
+La cantidad indica **unidades del producto**; no es su volumen ni su peso. El espacio necesario se calcula como `cantidad × volumen_unitario`. Productos, depósitos y vehículos deben usar la misma unidad de volumen. La aplicación guarda los números y no convierte unidades automáticamente.
+
+Por ejemplo, si se utiliza m³, un producto de 500 cm³ debe registrarse con volumen `0.0005`, no `500`. Si un producto ocupa `500` por unidad y un depósito tiene `590` de espacio libre, solo entra una unidad. El peso se registra, pero todavía no limita los movimientos ni la asignación a vehículos.
+
 ## Uso del inventario desde Python (opcional)
 
 Después de ejecutar el programa una vez, este ejemplo puede ejecutarse desde una consola Python ubicada en la raíz del repositorio:
@@ -217,7 +239,7 @@ inv.close()
 exit()
 ```
 
-Al ejecutar de nuevo `python Backend/main.py --db prueba_pedidos.db --resumen`, deben aparecer las cantidades modificadas y el pedido Entregado. Para repetir la carga, usar un identificador de pedido nuevo; los ejemplos no reponen existencias existentes.
+Al ejecutar de nuevo `python Backend/main.py --db prueba_pedidos.db --resumen`, deben aparecer las cantidades modificadas y el pedido Entregado. Para repetir este ejemplo completo, usar un archivo de prueba nuevo o identificadores nuevos para el pedido, el vehículo y el conductor. Los ejemplos no reponen existencias existentes.
 
 Para editar un borrador, usar `editar_borrador(id_pedido, cliente, destino, prioridad)` y `establecer_producto(...)`, que reemplaza la cantidad de esa pareja depósito/producto. `quitar_producto(id_pedido, id_deposito, id_producto)` elimina una asignación. `cancelar(id_pedido)` cancela un borrador o confirmado. `StockInsuficiente` es un `ValueError` cuyo atributo `faltantes` contiene producto, depósito, unidades solicitadas, disponibles y faltantes.
 
@@ -286,7 +308,7 @@ Los métodos de `FlotaSQLite` guardan los cambios. Los objetos devueltos por `ob
 ├── README.md
 ├── Informe.md
 ├── Backend/
-│   ├── main.py              # Inventario y simulación opcional
+│   ├── main.py              # Arranque, argumentos y simulación opcional
 │   ├── consola.py           # Menú interactivo y consultas compartidas
 │   ├── persistencia.py      # Acceso a SQLite y reglas de inventario
 │   ├── pedidos.py           # Borradores, reservas y transiciones de pedidos
@@ -301,7 +323,22 @@ Los métodos de `FlotaSQLite` guardan los cambios. Los objetos devueltos por `ob
 │       ├── productos.py
 │       └── vehiculo.py
 ├── tests/                  # Pruebas con SQLite real y archivos temporales
-└── docs/superpowers/        # Diseño y plan de esta etapa
+└── docs/superpowers/        # Decisiones de diseño y planes de implementación
+```
+
+## Organización del código y documentación
+
+`main.py` abre la base y elige entre menú, resumen y simulación. `consola.py` recoge los datos y muestra resultados. `persistencia.py`, `pedidos.py` y `flota.py` aplican las operaciones persistentes usando una conexión compartida; `schema.sql` define las tablas y sus restricciones.
+
+Los archivos de `modelos/` representan entidades y operaciones en memoria. Los objetos recuperados de SQLite son copias: para guardar cambios hay que utilizar los repositorios persistentes, no modificar directamente esas copias. La simulación mantiene su propio flujo local y no escribe sus pedidos en la base.
+
+Los módulos, clases y funciones Python, incluidos los tests, tienen docstrings en español siguiendo las convenciones de [PEP 257](https://peps.python.org/pep-0257/). Para describir contratos se utilizan las secciones `Args`, `Returns`, `Raises`, `Yields` y `Attributes` cuando corresponden. Los comentarios explican decisiones como el bloqueo de escrituras, el cálculo de reservas y las diferencias entre simulación y persistencia.
+
+La documentación puede consultarse desde el editor o con `help()`. Por ejemplo, desde una consola Python iniciada en la raíz del proyecto:
+
+```python
+from Backend.persistencia import InventarioSQLite
+help(InventarioSQLite.actualizar_stock)
 ```
 
 ## Pruebas
@@ -314,6 +351,15 @@ python -B -m unittest discover -s tests -v
 
 Cubren recuperación de datos, existencias por depósito, capacidad, validaciones, traslados, rollback, reservas, estados de pedidos, confirmaciones concurrentes, flota, conflictos de asignación, despacho integrado, migración de bases anteriores y operaciones completas desde el menú con entrada real por consola. Utilizan archivos temporales y no modifican la base de uso habitual.
 
+| Archivo | Qué verifica |
+| --- | --- |
+| `tests/test_inventario.py` | Existencias, capacidad, traslados y recuperación de datos. |
+| `tests/test_pedidos.py` | Borradores, reservas, estados y rechazo sin cambios parciales. |
+| `tests/test_flota.py` | Asignaciones únicas, disponibilidad y recuperación de flota. |
+| `tests/test_distribucion.py` | Vinculación con vehículos, despacho integrado y migraciones. |
+| `tests/test_main.py` | Arranque, consultas, acceso anterior y simulación. |
+| `tests/test_consola.py` | Navegación, validaciones y flujo completo desde el menú. |
+
 ## Alcance y próximas etapas
 
 Esta etapa persiste **productos, depósitos, existencias, pedidos, vehículos, conductores y sus asignaciones**. No incluye edición de características de productos/depósitos ni bajas desde la capa de persistencia; los objetos recuperados son copias de los datos y modificarlos directamente no actualiza la base. Los métodos del modelo `Deposito` operan sobre esa copia en memoria.
@@ -324,5 +370,6 @@ Queda pendiente discutir e implementar, por separado:
 - Entidades de entrega, despachos parciales, devoluciones e historial detallado de movimientos.
 - Interfaz web y API REST.
 - Priorización, restricciones por peso, optimización de rutas y reportes.
+- Edición persistente de las características de las entidades y reglas de baja.
 
 La propuesta original y los fundamentos académicos se encuentran en [Informe.md](Informe.md).

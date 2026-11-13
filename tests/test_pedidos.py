@@ -1,3 +1,8 @@
+"""Prueba la edición, reservas y transiciones persistentes de pedidos.
+
+Utiliza unittest y recursos aislados de la base de uso habitual.
+"""
+
 import sqlite3
 import tempfile
 import threading
@@ -16,7 +21,10 @@ from Backend.modelos.vehiculo import Vehiculo
 
 
 class PedidosTests(unittest.TestCase):
+    """Prueba borradores, reservas y estados con SQLite real."""
+
     def setUp(self):
+        """Prepara recursos temporales y registra su cierre tras la prueba."""
         self.temporal = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporal.cleanup)
         self.ruta = Path(self.temporal.name) / "pedidos.db"
@@ -31,10 +39,16 @@ class PedidosTests(unittest.TestCase):
         self.pedidos.crear_borrador("A", "Cliente", "Destino", 2)
 
     def cargar(self, id_pedido="A"):
+        """Carga el pedido de prueba con productos de dos depósitos.
+
+        Args:
+            id_pedido (str): Identificador del pedido. Por defecto: 'A'.
+        """
         self.pedidos.establecer_producto(id_pedido, "D1", "P1", 50)
         self.pedidos.establecer_producto(id_pedido, "D2", "P1", 30)
 
     def asignar_para_despacho(self):
+        """Registra flota de prueba y asigna vehículo al pedido A."""
         flota = FlotaSQLite(self.inv)
         flota.registrar_vehiculo(Vehiculo("V1", 100))
         flota.registrar_conductor(Conductor("C1", "Conductor"))
@@ -42,6 +56,7 @@ class PedidosTests(unittest.TestCase):
         self.pedidos.asignar_vehiculo("A", "V1")
 
     def test_borrador_editable_y_recuperable(self):
+        """Comprueba el caso: borrador editable y recuperable."""
         self.cargar()
         self.pedidos.editar_borrador("A", "Nuevo cliente", "Nueva dirección", 3)
         self.pedidos.establecer_producto("A", "D1", "P1", 45)
@@ -60,6 +75,7 @@ class PedidosTests(unittest.TestCase):
             self.assertEqual(inv.stock_reservado("D1", "P1"), 0)
 
     def test_confirmacion_reserva_varios_depositos_sin_descontar_fisico(self):
+        """Comprueba el caso: confirmacion reserva varios depositos sin descontar fisico."""
         self.cargar()
         self.pedidos.confirmar("A")
         self.assertEqual(self.inv.stock("D1", "P1"), 50)
@@ -72,6 +88,7 @@ class PedidosTests(unittest.TestCase):
             self.assertEqual(PedidosSQLite(otra).obtener_pedido("A").estado, "Confirmado")
 
     def test_faltantes_completos_conservan_borrador_y_no_reservan(self):
+        """Comprueba el caso: faltantes completos conservan borrador y no reservan."""
         self.pedidos.establecer_producto("A", "D1", "P1", 55)
         self.pedidos.establecer_producto("A", "D2", "P1", 42)
         self.pedidos.establecer_producto("A", "D1", "P2", 1)
@@ -85,6 +102,7 @@ class PedidosTests(unittest.TestCase):
         self.pedidos.confirmar("A")
 
     def test_otro_pedido_retiros_y_traslados_respetan_reservas(self):
+        """Comprueba el caso: otro pedido retiros y traslados respetan reservas."""
         self.pedidos.establecer_producto("A", "D1", "P1", 45)
         self.pedidos.confirmar("A")
         self.pedidos.crear_borrador("B", "Otro", "Destino")
@@ -100,6 +118,7 @@ class PedidosTests(unittest.TestCase):
         self.assertEqual(self.inv.stock("D2", "P1"), 45)
 
     def test_cancelar_libera_reservas_sin_cambiar_stock(self):
+        """Comprueba el caso: cancelar libera reservas sin cambiar stock."""
         self.cargar()
         self.pedidos.confirmar("A")
         self.pedidos.cancelar("A")
@@ -109,6 +128,7 @@ class PedidosTests(unittest.TestCase):
         self.assertEqual(len(self.pedidos.obtener_pedido("A").productos), 2)
 
     def test_cancelar_borrador_no_libera_reservas_de_otro(self):
+        """Comprueba el caso: cancelar borrador no libera reservas de otro."""
         self.cargar()
         self.pedidos.confirmar("A")
         self.pedidos.crear_borrador("B", "Otro", "Destino")
@@ -116,6 +136,7 @@ class PedidosTests(unittest.TestCase):
         self.assertEqual(self.inv.stock_reservado("D1", "P1"), 50)
 
     def test_solo_borradores_se_editan(self):
+        """Comprueba el caso: solo borradores se editan."""
         self.cargar()
         self.pedidos.confirmar("A")
         for operacion in [
@@ -128,6 +149,7 @@ class PedidosTests(unittest.TestCase):
         self.assertEqual(self.inv.stock_reservado("D1", "P1"), 50)
 
     def test_despacho_completo_unico_y_entrega(self):
+        """Comprueba el caso: despacho completo unico y entrega."""
         self.cargar()
         self.pedidos.confirmar("A")
         self.asignar_para_despacho()
@@ -150,6 +172,7 @@ class PedidosTests(unittest.TestCase):
         self.assertEqual(self.inv.stock("D2", "P1"), 10)
 
     def test_despacho_fallido_revierte_todos_los_movimientos(self):
+        """Comprueba el caso: despacho fallido revierte todos los movimientos."""
         self.cargar()
         self.pedidos.confirmar("A")
         self.asignar_para_despacho()
@@ -167,6 +190,7 @@ class PedidosTests(unittest.TestCase):
         self.assertEqual(self.inv.stock_reservado("D1", "P1"), 50)
 
     def test_estados_y_datos_invalidos(self):
+        """Comprueba el caso: estados y datos invalidos."""
         for operacion in [self.pedidos.confirmar, self.pedidos.despachar, self.pedidos.entregar]:
             with self.assertRaises(ValueError):
                 operacion("A")
@@ -190,12 +214,21 @@ class PedidosTests(unittest.TestCase):
             self.pedidos.obtener_pedido("inexistente")
 
     def test_dos_conexiones_no_reservan_las_mismas_unidades(self):
+        """Comprueba el caso: dos conexiones no reservan las mismas unidades."""
         self.pedidos.establecer_producto("A", "D1", "P1", 40)
         self.pedidos.crear_borrador("B", "Otro", "Destino")
         self.pedidos.establecer_producto("B", "D1", "P1", 40)
         barrera = threading.Barrier(2)
 
         def confirmar(id_pedido):
+            """Ejecuta una confirmación concurrente con conexión independiente.
+
+            Args:
+                id_pedido (str): Identificador del pedido.
+
+            Returns:
+                str: Resultado usado para contar operaciones aceptadas.
+            """
             with InventarioSQLite(self.ruta) as inv:
                 pedidos = PedidosSQLite(inv)
                 barrera.wait(timeout=5)
@@ -212,6 +245,7 @@ class PedidosTests(unittest.TestCase):
         self.assertEqual(self.inv.stock_disponible("D1", "P1"), 10)
 
     def test_amplia_base_anterior_sin_perder_existencias(self):
+        """Comprueba el caso: amplia base anterior sin perder existencias."""
         ruta = Path(self.temporal.name) / "anterior.db"
         esquema = (Path(__file__).resolve().parents[1] / "Backend/schema.sql").read_text(encoding="utf-8")
         # Recrea solo las tablas de la primera etapa, sin tablas de pedidos.

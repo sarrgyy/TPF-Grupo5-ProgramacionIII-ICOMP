@@ -1,4 +1,9 @@
-"""Menú de texto y consultas del sistema logístico."""
+"""Presenta consultas compartidas y el menú de texto de logística.
+
+MenuConsola recoge las entradas antes de llamar a las operaciones SQL.
+mostrar_inventario, mostrar_pedidos y mostrar_flota se comparten con
+--resumen. ejecutar_menu finaliza ante EOF o Ctrl+C.
+"""
 
 import math
 import sqlite3
@@ -12,6 +17,11 @@ from .modelos.vehiculo import Vehiculo
 
 
 def mostrar_inventario(inventario):
+    """Imprime stock físico, reservas, disponibilidad y características.
+
+    Args:
+        inventario (InventarioSQLite): Sesión abierta que se reutiliza.
+    """
     productos = inventario.listar_productos()
     for deposito in inventario.listar_depositos():
         print(f"\n{deposito.id_deposito} — {deposito.nombre}")
@@ -29,6 +39,11 @@ def mostrar_inventario(inventario):
 
 
 def mostrar_flota(inventario):
+    """Imprime vehículos, conductores, carga y asignaciones actuales.
+
+    Args:
+        inventario (InventarioSQLite): Sesión abierta que se reutiliza.
+    """
     flota = FlotaSQLite(inventario)
     print("\n--- Vehículos guardados ---")
     vehiculos = flota.listar_vehiculos()
@@ -50,6 +65,11 @@ def mostrar_flota(inventario):
 
 
 def mostrar_pedidos(inventario):
+    """Imprime estado, volumen y vehículo de los pedidos guardados.
+
+    Args:
+        inventario (InventarioSQLite): Sesión abierta que se reutiliza.
+    """
     print("\n--- Pedidos guardados ---")
     pedidos = PedidosSQLite(inventario).listar_pedidos()
     if not pedidos:
@@ -61,29 +81,87 @@ def mostrar_pedidos(inventario):
 
 
 class _CargaCancelada(Exception):
+    """Señala que /volver canceló el formulario antes de guardar cambios."""
+
     pass
 
 
 class MenuConsola:
+    """Coordina formularios y navegación sin duplicar reglas de negocio.
+
+    Obtiene todos los campos antes de ejecutar una operación persistente.
+    Los errores de negocio se muestran sin cerrar el menú.
+
+    Attributes:
+        inventario (InventarioSQLite): Sesión abierta por el punto de entrada.
+        pedidos (PedidosSQLite): Operaciones persistentes de pedidos.
+        flota (FlotaSQLite): Operaciones persistentes de flota.
+    """
+
     def __init__(self, inventario):
+        """Prepara los repositorios sobre una misma sesión abierta.
+
+        Args:
+            inventario (InventarioSQLite): Sesión abierta que se reutiliza.
+        """
         self.inventario = inventario
         self.pedidos = PedidosSQLite(inventario)
         self.flota = FlotaSQLite(inventario)
 
     @staticmethod
     def _entrada(mensaje):
+        """Lee una respuesta sin espacios extremos y detecta /volver.
+
+        Args:
+            mensaje (str): Texto de la solicitud de entrada.
+
+        Returns:
+            str: Respuesta del usuario.
+
+        Raises:
+            _CargaCancelada: Se ingresó /volver.
+            EOFError: Se cerró la entrada.
+            KeyboardInterrupt: Se interrumpió la lectura.
+        """
         valor = input(mensaje + ": ").strip()
         if valor == "/volver":
             raise _CargaCancelada
         return valor
 
     def _texto(self, mensaje):
+        """Lee un texto obligatorio del formulario.
+
+        Args:
+            mensaje (str): Texto de la solicitud de entrada.
+
+        Returns:
+            str: Respuesta no vacía.
+
+        Raises:
+            ValueError: Texto vacío.
+            _CargaCancelada: Se canceló el formulario.
+        """
         valor = self._entrada(mensaje)
         if not valor:
             raise ValueError("El dato no puede estar vacío.")
         return valor
 
     def _entero(self, mensaje, maximo=2**63 - 1, defecto=None):
+        """Lee un entero positivo dentro del límite solicitado.
+
+        Args:
+            mensaje (str): Texto de la solicitud de entrada.
+            maximo (int): Mayor entero permitido. Por defecto: 2 ** 63 - 1.
+            defecto (int | None): Valor ante entrada vacía; None exige
+                respuesta. Por defecto: None.
+
+        Returns:
+            int: Valor validado o predeterminado ante una entrada vacía.
+
+        Raises:
+            ValueError: Formato o rango no válido.
+            _CargaCancelada: Se canceló la carga.
+        """
         texto = self._entrada(mensaje)
         if not texto and defecto is not None:
             return defecto
@@ -96,6 +174,18 @@ class MenuConsola:
         return valor
 
     def _medida(self, mensaje):
+        """Lee una medida positiva y finita con coma o punto decimal.
+
+        Args:
+            mensaje (str): Texto de la solicitud de entrada.
+
+        Returns:
+            float: Medida validada.
+
+        Raises:
+            ValueError: Formato o rango no válido.
+            _CargaCancelada: Se canceló la carga.
+        """
         try:
             valor = float(self._entrada(mensaje).replace(",", "."))
         except ValueError:
@@ -105,15 +195,44 @@ class MenuConsola:
         return valor
 
     def _estado(self, estados):
+        """Presenta una elección numerada entre los estados recibidos.
+
+        Args:
+            estados (tuple[str, ...]): Estados admitidos por la operación.
+
+        Returns:
+            str: Estado correspondiente a la opción elegida.
+
+        Raises:
+            ValueError: Número de estado no admitido.
+        """
         opciones = ", ".join(f"{i} {estado}" for i, estado in enumerate(estados, 1))
         return estados[self._entero(f"Estado ({opciones})", maximo=len(estados)) - 1]
 
     @staticmethod
     def _guardar(funcion, *argumentos):
+        """Ejecuta la operación y anuncia éxito solo después de guardarla.
+
+        No abre otra transacción; los errores se propagan hasta el menú.
+
+        Args:
+            funcion (Callable): Operación que recibe los datos recogidos.
+            argumentos (object): Argumentos posicionales de la operación.
+        """
         funcion(*argumentos)
         print("Operación guardada.")
 
     def _menu(self, titulo, opciones):
+        """Repite el menú y muestra errores sin cerrar la sesión.
+
+        0 termina este menú. Las acciones pueden abrir submenús; EOF y Ctrl+C se
+        propagan hasta ejecutar_menu.
+
+        Args:
+            titulo (str): Nombre del menú mostrado.
+            opciones (list[tuple[str, Callable]]): Etiquetas y acciones en el
+                orden mostrado.
+        """
         while True:
             print(f"\n--- {titulo} ---")
             for numero, (nombre, _) in enumerate(opciones, 1):
@@ -137,6 +256,7 @@ class MenuConsola:
                 print("Error: no se pudo acceder a los datos. Intentá nuevamente.")
 
     def principal(self):
+        """Abre Inventario, Pedidos o Flota hasta elegir Salir."""
         print("En cualquier carga podés escribir /volver para cancelarla.")
         self._menu("Menú principal", [
             ("Inventario", self.inventario_menu),
@@ -145,6 +265,7 @@ class MenuConsola:
         ])
 
     def inventario_menu(self):
+        """Presenta consultas, altas y movimientos de mercadería."""
         inv = self.inventario
         self._menu("Inventario", [
             ("Consultar inventario y productos", lambda: mostrar_inventario(inv)),
@@ -164,10 +285,16 @@ class MenuConsola:
         ])
 
     def _cabecera_pedido(self, funcion):
+        """Recoge todos los campos antes de crear o editar un borrador.
+
+        Args:
+            funcion (Callable): Operación que recibe los datos recogidos.
+        """
         self._guardar(funcion, self._texto("ID del pedido"), self._texto("Cliente"),
                       self._texto("Destino"), self._entero("Prioridad 1 a 3 [1]", maximo=3, defecto=1))
 
     def _detalle_pedido(self):
+        """Muestra destino, prioridad y cantidades del pedido por depósito."""
         pedido = self.pedidos.obtener_pedido(self._texto("ID del pedido"))
         print(f"{pedido.id_pedido} — {pedido.cliente}: {pedido.estado}")
         print(f"Destino: {pedido.destino}; prioridad: {pedido.prioridad}; "
@@ -180,6 +307,7 @@ class MenuConsola:
         print(f"Volumen total: {pedido.volumen_total:g}")
 
     def pedidos_menu(self):
+        """Presenta edición de borradores y transiciones persistentes."""
         p = self.pedidos
         self._menu("Pedidos", [
             ("Listar pedidos", lambda: mostrar_pedidos(self.inventario)),
@@ -201,6 +329,7 @@ class MenuConsola:
         ])
 
     def flota_menu(self):
+        """Presenta altas, consultas, asignaciones y estados de flota."""
         f = self.flota
         self._menu("Flota", [
             ("Consultar vehículos y conductores", lambda: mostrar_flota(self.inventario)),
@@ -219,6 +348,13 @@ class MenuConsola:
 
 
 def ejecutar_menu(inventario):
+    """Finaliza ante Salir, EOF o Ctrl+C conservando lo ya guardado.
+
+    El cierre de la conexión pertenece al llamador, normalmente main.
+
+    Args:
+        inventario (InventarioSQLite): Sesión abierta que se reutiliza.
+    """
     try:
         MenuConsola(inventario).principal()
     except (EOFError, KeyboardInterrupt):

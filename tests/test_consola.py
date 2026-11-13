@@ -1,3 +1,8 @@
+"""Prueba el menú con entrada real, formularios y persistencia.
+
+Utiliza unittest y recursos aislados de la base de uso habitual.
+"""
+
 import os
 import subprocess
 import sys
@@ -14,12 +19,25 @@ RAIZ = Path(__file__).resolve().parents[1]
 
 
 class ConsolaTests(unittest.TestCase):
+    """Prueba navegación, formularios y persistencia desde la consola."""
+
     def setUp(self):
+        """Prepara recursos temporales y registra su cierre tras la prueba."""
         self.temporal = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporal.cleanup)
         self.ruta = Path(self.temporal.name) / "menu.db"
 
     def ejecutar(self, entradas, *opciones):
+        """Ejecuta el programa aislado y comprueba que termine sin errores.
+
+        Args:
+            entradas (list[str]): Respuestas enviadas a la entrada estándar del
+                proceso.
+            opciones (str): Opciones adicionales de la línea de comandos.
+
+        Returns:
+            str: Salida estándar capturada; la espera máxima es de 15 segundos.
+        """
         resultado = subprocess.run(
             [sys.executable, "-B", str(RAIZ / "Backend/main.py"), "--db", str(self.ruta), *opciones],
             input="\n".join(entradas) + ("\n" if entradas else ""),
@@ -31,6 +49,7 @@ class ConsolaTests(unittest.TestCase):
         return resultado.stdout
 
     def test_flujo_completo_por_menu_y_reapertura(self):
+        """Comprueba el caso: flujo completo por menu y reapertura."""
         self.ejecutar([
             "1",  # Inventario
             "2", "P3", "Arroz", "0,1", "1",  # Registrar producto
@@ -69,6 +88,7 @@ class ConsolaTests(unittest.TestCase):
         self.assertIn("Entregado", salida)
 
     def test_errores_y_cancelacion_no_cierran_ni_escriben_carga_incompleta(self):
+        """Comprueba el caso: errores y cancelacion no cierran ni escriben carga incompleta."""
         salida = self.ejecutar([
             "invalida", "1",
             "2", "CANCELADO", "/volver",
@@ -85,6 +105,7 @@ class ConsolaTests(unittest.TestCase):
             self.assertEqual(len(inv.listar_productos()), 2)
 
     def test_borrador_rechazado_puede_corregirse_y_cancelarse(self):
+        """Comprueba el caso: borrador rechazado puede corregirse y cancelarse."""
         self.ejecutar([
             "2", "3", "A", "Cliente", "Destino", "2",
             "5", "A", "D-001", "PRD-1", "501",
@@ -102,11 +123,13 @@ class ConsolaTests(unittest.TestCase):
             self.assertEqual(inv.stock_reservado("D-001", "PRD-1"), 0)
 
     def test_eof_durante_carga_cierra_sin_escribir(self):
+        """Comprueba el caso: eof durante carga cierra sin escribir."""
         self.ejecutar(["1", "2", "INCOMPLETO"])
         with InventarioSQLite(self.ruta) as inv:
             self.assertEqual(len(inv.listar_productos()), 2)
 
     def test_liberaciones_y_estados_de_flota_desde_menu(self):
+        """Comprueba el caso: liberaciones y estados de flota desde menu."""
         self.ejecutar([
             "3", "2", "V1", "20", "3", "C1", "Ana",
             "4", "V1", "C1", "5", "V1",

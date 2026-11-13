@@ -1,3 +1,8 @@
+"""Prueba el arranque, resúmenes y simulación del punto de entrada.
+
+Utiliza unittest y recursos aislados de la base de uso habitual.
+"""
+
 import os
 import subprocess
 import sys
@@ -16,12 +21,25 @@ RAIZ = Path(__file__).resolve().parents[1]
 
 
 class MainTests(unittest.TestCase):
+    """Prueba arranque, consultas y simulación desde procesos aislados."""
+
     def setUp(self):
+        """Prepara recursos temporales y registra su cierre tras la prueba."""
         self.temporal = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporal.cleanup)
         self.ruta = Path(self.temporal.name) / "inventario.db"
 
     def ejecutar(self, *opciones, script=None):
+        """Ejecuta el programa aislado y comprueba que termine sin errores.
+
+        Args:
+            script (pathlib.Path o None): Acceso alternativo; None usa
+                Backend/main.py. Por defecto: None.
+            opciones (str): Opciones adicionales de la línea de comandos.
+
+        Returns:
+            str: Salida estándar capturada; la espera máxima es de 15 segundos.
+        """
         if "--simular-pedidos" not in opciones:
             opciones = (*opciones, "--resumen")
         resultado = subprocess.run(
@@ -35,6 +53,7 @@ class MainTests(unittest.TestCase):
         return resultado.stdout
 
     def test_dos_arranques_conservan_stock_modificado(self):
+        """Comprueba el caso: dos arranques conservan stock modificado."""
         self.ejecutar()
         with InventarioSQLite(self.ruta) as inv:
             self.assertEqual(len(inv.listar_depositos()), 2)
@@ -47,6 +66,7 @@ class MainTests(unittest.TestCase):
             self.assertEqual(inv.stock("D-002", "PRD-1"), 100)
 
     def test_simulacion_no_descuenta_stock_persistido(self):
+        """Comprueba el caso: simulacion no descuenta stock persistido."""
         salida = self.ejecutar("--simular-pedidos")
         self.assertIn("P-100", salida)
         self.assertIn("P-101", salida)
@@ -55,11 +75,13 @@ class MainTests(unittest.TestCase):
             self.assertEqual(inv.stock("D-001", "PRD-2"), 800)
 
     def test_acceso_anterior_delega_al_main_actual(self):
+        """Comprueba el caso: acceso anterior delega al main actual."""
         self.ejecutar(script=RAIZ / "Backend/modelos/main.py")
         with InventarioSQLite(self.ruta) as inv:
             self.assertEqual(inv.stock_total("PRD-1"), 600)
 
     def test_muestra_stock_reservado_y_pedido_guardado(self):
+        """Comprueba el caso: muestra stock reservado y pedido guardado."""
         self.ejecutar()
         with InventarioSQLite(self.ruta) as inv:
             pedidos = PedidosSQLite(inv)
@@ -80,6 +102,7 @@ class MainTests(unittest.TestCase):
         self.assertIn("pedido activo: MANUAL-1", salida)
 
     def test_muestra_asignacion_guardada_sin_reemplazarla(self):
+        """Comprueba el caso: muestra asignacion guardada sin reemplazarla."""
         self.ejecutar()
         with InventarioSQLite(self.ruta) as inv:
             flota = FlotaSQLite(inv)

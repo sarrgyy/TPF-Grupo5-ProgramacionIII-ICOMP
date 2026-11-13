@@ -1,3 +1,8 @@
+"""Prueba la distribución y atomicidad entre stock, pedidos y flota.
+
+Utiliza unittest y recursos aislados de la base de uso habitual.
+"""
+
 import sqlite3
 import tempfile
 import threading
@@ -15,7 +20,10 @@ from Backend.persistencia import InventarioSQLite
 
 
 class DistribucionTests(unittest.TestCase):
+    """Prueba distribución atómica entre stock, pedidos y flota."""
+
     def setUp(self):
+        """Prepara recursos temporales y registra su cierre tras la prueba."""
         self.temporal = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporal.cleanup)
         self.ruta = Path(self.temporal.name) / "distribucion.db"
@@ -35,6 +43,7 @@ class DistribucionTests(unittest.TestCase):
             self.pedidos.confirmar(id_)
 
     def test_asignacion_reapertura_y_capacidad_exacta(self):
+        """Comprueba el caso: asignacion reapertura y capacidad exacta."""
         self.pedidos.asignar_vehiculo("A", "V1")
         with InventarioSQLite(self.ruta) as inv:
             self.assertEqual(PedidosSQLite(inv).obtener_pedido("A").vehiculo_asignado, "V1")
@@ -45,6 +54,7 @@ class DistribucionTests(unittest.TestCase):
             self.pedidos.asignar_vehiculo("B", "V1")
 
     def test_no_asigna_sin_conductor_ni_capacidad(self):
+        """Comprueba el caso: no asigna sin conductor ni capacidad."""
         self.flota.registrar_vehiculo(Vehiculo("SIN", 100))
         self.flota.registrar_vehiculo(Vehiculo("CHICO", 10))
         self.flota.registrar_conductor(Conductor("C3", "Otro"))
@@ -58,6 +68,7 @@ class DistribucionTests(unittest.TestCase):
             self.pedidos.asignar_vehiculo("A", "V1")
 
     def test_no_asigna_borrador_ni_reemplaza_vehiculo(self):
+        """Comprueba el caso: no asigna borrador ni reemplaza vehiculo."""
         self.pedidos.crear_borrador("BORRADOR", "Cliente", "Destino")
         with self.assertRaises(ValueError):
             self.pedidos.asignar_vehiculo("BORRADOR", "V1")
@@ -69,6 +80,7 @@ class DistribucionTests(unittest.TestCase):
         self.pedidos.asignar_vehiculo("B", "V1")
 
     def test_flota_no_puede_alterar_pedido_activo(self):
+        """Comprueba el caso: flota no puede alterar pedido activo."""
         self.pedidos.asignar_vehiculo("A", "V1")
         for operacion in [
             lambda: self.flota.liberar_conductor("V1"),
@@ -79,6 +91,7 @@ class DistribucionTests(unittest.TestCase):
                 operacion()
 
     def test_cancelacion_libera_vehiculo_y_reservas(self):
+        """Comprueba el caso: cancelacion libera vehiculo y reservas."""
         self.pedidos.asignar_vehiculo("A", "V1")
         self.pedidos.cancelar("A")
         self.assertIsNone(self.flota.obtener_vehiculo("V1").pedido_asignado)
@@ -86,6 +99,7 @@ class DistribucionTests(unittest.TestCase):
         self.pedidos.asignar_vehiculo("B", "V1")
 
     def test_despacho_y_entrega_integran_stock_y_flota(self):
+        """Comprueba el caso: despacho y entrega integran stock y flota."""
         with self.assertRaises(ValueError):
             self.pedidos.despachar("A")
         self.pedidos.asignar_vehiculo("A", "V1")
@@ -110,6 +124,7 @@ class DistribucionTests(unittest.TestCase):
         self.pedidos.asignar_vehiculo("B", "V1")
 
     def test_fallo_de_flota_revierte_despacho_y_entrega(self):
+        """Comprueba el caso: fallo de flota revierte despacho y entrega."""
         self.pedidos.asignar_vehiculo("A", "V1")
         self.inv.conexion.executescript("""
             CREATE TRIGGER falla_flota BEFORE UPDATE ON vehiculos
@@ -132,9 +147,18 @@ class DistribucionTests(unittest.TestCase):
         self.assertEqual(self.flota.obtener_vehiculo("V1").estado, "En Ruta")
 
     def test_asignaciones_concurrentes_no_ocupan_mismo_vehiculo(self):
+        """Comprueba el caso: asignaciones concurrentes no ocupan mismo vehiculo."""
         barrera = threading.Barrier(2)
 
         def asignar(id_pedido):
+            """Ejecuta una asignación concurrente con conexión independiente.
+
+            Args:
+                id_pedido (str): Identificador del pedido.
+
+            Returns:
+                str: Resultado usado para contar operaciones aceptadas.
+            """
             with InventarioSQLite(self.ruta) as inv:
                 pedidos = PedidosSQLite(inv)
                 barrera.wait(timeout=5)
@@ -148,6 +172,7 @@ class DistribucionTests(unittest.TestCase):
             self.assertCountEqual(list(ejecutor.map(asignar, ["A", "B"])), ["asignado", "rechazado"])
 
     def test_migracion_conserva_pedidos_anteriores(self):
+        """Comprueba el caso: migracion conserva pedidos anteriores."""
         ruta = Path(self.temporal.name) / "anterior.db"
         with closing(sqlite3.connect(ruta)) as conexion, conexion:
             conexion.execute("""CREATE TABLE pedidos (

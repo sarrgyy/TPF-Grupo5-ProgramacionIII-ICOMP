@@ -1,4 +1,10 @@
-"""Inventario persistente y simulación opcional de distribución."""
+"""Inicia el menú de gestión logística sobre una base SQLite.
+
+Uso: python Backend/main.py [--db RUTA] [--resumen | --simular-pedidos].
+Sin opciones abre el menú; el resumen consulta y termina; la simulación
+opera sobre copias locales. RUTA_DB apunta a logistica.db junto al módulo.
+La carga de ejemplo solo ocurre si no hay productos ni depósitos.
+"""
 
 import argparse
 import sys
@@ -21,6 +27,14 @@ RUTA_DB = Path(__file__).resolve().with_name("logistica.db")
 
 
 def cargar_ejemplo(inventario):
+    """Carga el inventario de ejemplo solo cuando la base está vacía.
+
+    Args:
+        inventario (InventarioSQLite): Sesión abierta que se reutiliza.
+
+    Returns:
+        bool: True si se cargó; False si ya había productos o depósitos.
+    """
     return inventario.cargar_iniciales(
         [Producto("PRD-1", "Cajas de Leche", 0.5, 1.0),
          Producto("PRD-2", "Bolsas de Harina", 0.2, 0.5)],
@@ -32,6 +46,11 @@ def cargar_ejemplo(inventario):
 
 
 def simular_pedidos(inventario):
+    """Simula distribución con copias del stock disponible, sin guardarlas.
+
+    Args:
+        inventario (InventarioSQLite): Sesión abierta que se reutiliza.
+    """
     print("\n--- SIMULACIÓN: no modifica el inventario guardado ---")
     try:
         inventario.obtener_deposito("D-001")
@@ -76,6 +95,11 @@ def simular_pedidos(inventario):
 
 
 def main():
+    """Interpreta argumentos y abre la sesión hasta finalizar el modo elegido.
+
+    Raises:
+        sqlite3.Error: No se pudo abrir, preparar o consultar la base.
+    """
     parser = argparse.ArgumentParser(description="Inventario logístico persistente en SQLite.")
     parser.add_argument("--db", type=Path, default=RUTA_DB, help="Ruta del archivo SQLite.")
     grupo = parser.add_mutually_exclusive_group()
