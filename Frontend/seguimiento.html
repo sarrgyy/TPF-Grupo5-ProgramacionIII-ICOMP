@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Seguimiento Logístico</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="container">
+        <header>
+            <h1>Sistema de Seguimiento de Logística y Distribución</h1>
+        </header>
+
+        <nav>
+            <ul>
+                <li><a href="index.html">Inicio</a></li>
+                <li><a href="gestion.html">Gestion</a></li>
+                <li><a href="cargas.html">Cargar</a></li>
+                <li><a href="seguimiento.html" class="activo">Seguimiento</a></li>
+            </ul>
+        </nav>
+
+        <div class="main-wrapper">
+            <section id="content">
+                <div class="card">
+                    <h2>Rastrear Envío</h2>
+                    <form class="tracking-search">
+                        <input type="text" placeholder="Ingresá código de envío (ej. #890)">
+                        <button type="submit" class="btn-secondary">Buscar</button>
+                    </form>    
+                </div>
+                <div class="card">
+                    <h2>Estado del Envío #015</h2>
+                    <ol class="timeline">
+                        <li class="completado">Orden preparada en depósito (10:15 hs)</li>
+                        <li class="actual">En tránsito hacia Invap (11:40 hs)</li>
+                        <li>Entregado en destino (Pendiente)</li>
+                    </ol>
+                </div>
+            </section>
+
+            <aside>
+                <h2>Detalle del Envío</h2>
+                <ul class="detail-list">
+                    <li>Destino: Invap</li>
+                    <li>Chofer: Juan Perez</li>
+                    <li>Vehiculo: Renault Kangoo(AB-123-CD)</li>
+                    <li>Peso Total: 45Kg</li>
+                </ul>
+            </aside>
+        </div>
+
+        <footer>
+            Grupo 5 Web &copy; 2026
+        </footer>
+    </div>
+</body>
+</html>

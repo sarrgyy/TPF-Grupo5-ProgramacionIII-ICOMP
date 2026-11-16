@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Seguimiento Logístico</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="container">
+        <header>
+            <h1>Sistema de Seguimiento de Logística y Distribución</h1>
+        </header>
+
+        <nav>
+            <ul>
+                <li><a href="index.html">Inicio</a></li>
+                <li><a href="gestion.html" class="activo">Gestion</a></li>
+                <li><a href="cargas.html">Cargar</a></li>
+                <li><a href="seguimiento.html">Seguimiento</a></li>
+            </ul>
+        </nav>
+
+        <div class="main-wrapper">
+            <section id="content">
+                <article class="card">
+                    <h2>Resumen de operaciones</h2>
+                    <p>Estado general de los envíos y control de inventario activo.</p>
+                </article>
+                <div class="card" id="productos">
+                    <h2>Productos en tránsito</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Prioridad</th>
+                                <th>Estado</th>
+                                <th>Peso</th>
+                                <th>Stock</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tbody id="productos-body">
+                            </tbody>
+                            <tr>
+                                <td>#001</td>
+                                <td>Caja Estándar A</td>
+                                <td>Alta</td>
+                                <td><span class="badge pendiente">Pendiente</span></td>
+                                <td>12 kg</td>
+                                <td>45</td>
+                            </tr>
+                            <tr>
+                                <td>#002</td>
+                                <td>Pallet Electrónica</td>
+                                <td>Media</td>
+                                <td><span class="badge entregado">Entregado</span></td>
+                                <td>150 kg</td>
+                                <td>10</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+        </div>
+
+        <footer>
+            Grupo 5 Web &copy; 2026
+        </footer>
+    </div>
+</body>
+</html>
