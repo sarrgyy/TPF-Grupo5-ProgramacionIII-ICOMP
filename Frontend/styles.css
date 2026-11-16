@@ -1,0 +1,214 @@
+/* Reseteo básico para evitar problemas de medidas y márgenes */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: #f0f2f5;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+    line-height: 1.6;
+}
+
+#container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 30px auto;
+    background-color: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Cabecera */
+header {
+    background-color: #1e293b;
+    color: #ffffff;
+    padding: 30px 20px;
+    text-align: center;
+}
+
+header h1 {
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+/* Barra de navegación */
+nav {
+    background-color: #334155;
+    padding: 0 20px;
+}
+
+nav ul {
+    display: flex;
+    list-style: none;
+    gap: 20px;
+}
+
+nav ul li a {
+    display: block;
+    color: #f8fafc;
+    text-decoration: none;
+    padding: 14px 10px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+nav ul li a:hover {
+    background-color: #475569;
+}
+
+/* Contenedor principal (Reemplaza float y clearfix) */
+.main-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+#content {
+    flex: 3; /* Ocupa el 75% del espacio */
+    min-width: 300px;
+    padding: 25px;
+    background-color: #ffffff;
+}
+
+aside {
+    flex: 1; /* Ocupa el 25% del espacio */
+    min-width: 250px;
+    padding: 25px;
+    background-color: #f8fafc;
+    border-left: 1px solid #e2e8f0;
+}
+
+/* Tarjetas internas */
+.card {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.card:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+h2 {
+    color: #1e293b;
+    margin-bottom: 15px;
+    font-size: 1.3rem;
+}
+
+/* Estilos de la tabla */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+th, td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+th {
+    background-color: #f1f5f9;
+    color: #475569;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+}
+
+tr:hover {
+    background-color: #f8fafc;
+}
+
+/* Etiquetas de estado */
+.badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.pendiente {
+    background-color: #fef3c7;
+    color: #b45309;
+}
+
+.entregado {
+    background-color: #dcfce7;
+    color: #15803d;
+}
+
+/* Formularios */
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #475569;
+}
+
+input[type="text"],
+input[type="number"],
+select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    font-size: 0.95rem;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: #2563eb;
+}
+
+.search-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Botones */
+button {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 5px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-primary {
+    background-color: #2563eb;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #1d4ed8;
+}
+
+.btn-secondary {
+    background-color: #475569;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #334155;
+}
+
+/* Pie de página */
+footer {
+    background-color: #1e293b;
+    color: #94a3b8;
+    text-align: center;
+    padding: 18px;
+    font-size: 0.9rem;
+}
