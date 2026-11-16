@@ -12,6 +12,7 @@ class Pedido:
         self.estado = "Pendiente"  
         self.productos = []        
         self.volumen_total = 0.0   
+        self.entrega = None
 
     def agregar_producto(self, producto, cantidad, volumen_unitario):
         """

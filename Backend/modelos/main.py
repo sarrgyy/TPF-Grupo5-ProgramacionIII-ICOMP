@@ -1,11 +1,11 @@
 # main.py
 
-from deposito import deposito
-from producto import Producto
+from deposito import Deposito
+from productos import Producto
 from vehiculo import Vehiculo
 from conductor import Conductor
 from pedido import Pedido
-
+from entrega import Entrega
 def main():
     print("--- INICIANDO SISTEMA DE GESTIÓN LOGÍSTICA ---")
     
@@ -26,20 +26,18 @@ def main():
     chofer_2 = Conductor(dni="31333444", nombre="Ana Silva")
     
     # Asignación de choferes a vehículos mediante intercambio de mensajes
-    furgon_1.asignar_conductor(chofer_1.nombre)
+    furgon_1.asignar_conductor(chofer_1)
     chofer_1.asignar_vehiculo(furgon_1.patente)
     
-    camioneta_1.asignar_conductor(chofer_2.nombre)
+    camioneta_1.asignar_conductor(chofer_2)
     chofer_2.asignar_vehiculo(camioneta_1.patente)
 
     # 3. Creación y Recepción de Pedidos
     print("\n[3] INGRESANDO PEDIDOS DEL DÍA")
     pedido_01 = Pedido(id_pedido="P-100", cliente="Supermercado Sur", destino="Av. Pioneros 4500", prioridad=2)
     
-    # Agregamos productos al pedido 01
-    cant_leche_p1 = 20
-    if prod_leche.actualizar_stock(-cant_leche_p1): 
-        pedido_01.agregar_producto(prod_leche.nombre, cant_leche_p1, prod_leche.volumen_unitario)
+    entrega_p01 = Entrega(id_entrega="ENT-100", cliente="Supermercado Sur", direccion="Av. Pioneros 4500", hora_inicio="08:00", hora_fin="12:00")
+    pedido_01.entrega = entrega_p01
         
     cant_harina_p1 = 30
     if prod_harina.actualizar_stock(-cant_harina_p1):
@@ -47,8 +45,8 @@ def main():
 
     pedido_02 = Pedido(id_pedido="P-101", cliente="Despensa Centro", destino="Mitre 200", prioridad=1)
     cant_leche_p2 = 50
-    if prod_leche.actualizar_stock(-cant_leche_p2):
-        pedido_02.agregar_producto(prod_leche.nombre, cant_leche_p2, prod_leche.volumen_unitario)
+    entrega_p02 = Entrega(id_entrega="ENT-101", cliente="Despensa Centro", direccion="Mitre 200", hora_inicio="13:00", hora_fin="17:00")
+    pedido_02.entrega = entrega_p02
 
     # 4. Lógica Imperativa de Asignación
     print("\n[4] EJECUTANDO ALGORITMO DE ASIGNACIÓN IMPERATIVA")
