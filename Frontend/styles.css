@@ -270,8 +270,77 @@ nav ul li a.activo{
 .detail-list li{
     margin-bottom: 10px;
 }
+.form-row {
+    display: flex;
+    gap: 15px;
+}
+.form-group {
+    flex: 1;
+}
+/* Fila para agregar productos */
+.add-product-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
 
-     /* Pie de página */
+/* Botón eliminar de tabla */
+.btn-delete {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    padding: 5px 10px;
+}
+
+.btn-delete:hover {
+    background-color: #fecaca;
+}
+
+/* Barra de progreso en Aside */
+.peso-total {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #1e293b;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 12px;
+    background-color: #e2e8f0;
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 12px 0;
+}
+
+.progress-fill {
+    width: 45%;
+    height: 100%;
+    background-color: #2563eb;
+}
+
+.tabs {
+    display: flex; 
+    gap: 10px; 
+    margin-bottom: 20px; 
+    border-bottom: 2px solid #e2e8f0; 
+    padding-bottom: 10px;
+}
+
+.tab-btn { 
+    background-color: #f1f5f9;
+     color: #475569;
+}
+.tab-btn.active{
+    background-color: #2563eb;
+     color: #ffffff;
+}
+.btn-edit{
+    background-color: #fef3c7;
+    color: #b45309; 
+    padding: 5px 10px; 
+    margin-right: 5px;
+}
+
+/* Pie de página */
 footer {
     background-color: #1e293b;
     color: #94a3b8;

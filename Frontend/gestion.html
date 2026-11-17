@@ -23,45 +23,80 @@
 
         <div class="main-wrapper">
             <section id="content">
-                <article class="card">
-                    <h2>Resumen de operaciones</h2>
-                    <p>Estado general de los envíos y control de inventario activo.</p>
-                </article>
-                <div class="card" id="productos">
-                    <h2>Productos en tránsito</h2>
+                <div class="card">
+                    <div class="tabs">
+                        <button type="button" class="tab-btn active">Productos</button>
+                        <button type="button" class="tab-btn">Vehículos</button>
+                        <button type="button" class="tab-btn">Depósitos</button>
+                    </div>
                     <table>
                         <thead>
                             <tr>
                                 <th>ID</th>
                                 <th>Nombre</th>
-                                <th>Prioridad</th>
-                                <th>Estado</th>
                                 <th>Peso</th>
                                 <th>Stock</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tbody id="productos-body">
-                            </tbody>
+                        <tbody id="productos-body">
                             <tr>
-                                <td>#001</td>
-                                <td>Caja Estándar A</td>
-                                <td>Alta</td>
-                                <td><span class="badge pendiente">Pendiente</span></td>
-                                <td>12 kg</td>
-                                <td>45</td>
-                            </tr>
-                            <tr>
-                                <td>#002</td>
-                                <td>Pallet Electrónica</td>
-                                <td>Media</td>
-                                <td><span class="badge entregado">Entregado</span></td>
-                                <td>150 kg</td>
-                                <td>10</td>
+                                <td>#890</td>
+                                <td>Remera Slim</td>
+                                <td>2Kg</td>
+                                <td>2</td>
+                                <td>
+                                    <button type="button" class="btn-edit">Editar</button>
+                                    <button type="button" class="btn-delete">Eliminar</button>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
+                
                 </div>
+                <div class="card">
+                    <h2>Agregar Nuevo Producto</h2>
+                    <form id="alta-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="nombre-prod">Nombre del producto</label>
+                                <input type="text" id="nombre-prod" placeholder="Ej. Remera Slim">
+                            </div>
+                            <div class="form-group">
+                                <label for="categoria">Categoría</label>
+                                <select name="categoria" id="categoria">
+                                    <option value="ropa">Ropa</option>
+                                    <option value="vehiculo">Vehículo</option>
+                                    <option value="tecnologia">Tecnología</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="peso-prod">Peso (kg)</label>
+                                <input type="number" id="peso-prod" placeholder="Ej. 2">
+                            </div>
+                            <div class="form-group">
+                                <label for="stock-prod">Stock inicial</label>
+                                <input type="number" id="stock-prod" placeholder="Ej. 15">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary">Guardar en Inventario</button>
+                    </form>
+                </div>
+            </section>
+            <aside>
+                <h2>Filtrar Registros</h2>
+                <form class="search-form">
+                    <input type="text" placeholder="Buscar por nombre o ID...">
+                    <select>
+                        <option value="todos">Todos</option>
+                        <option value="bajo">Stock Bajo</option>
+                        <option value="disponible">Disponible</option>
+                    </select>
+                    <button type="submit" class="btn-secondary">Aplicar Filtros</button>
+                </form>    
+            </aside>
         </div>
 
         <footer>
