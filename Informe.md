@@ -1,96 +1,87 @@
-# TPF-Grupo5-ProgramacionIII-ICOMP" 
-# Sistema Inteligente de Gestión Logística y Distribución
+# Sistema de Gestión Logística y Distribución
 
-## 1. Descripción del proyecto
+Trabajo final del Grupo 5 de Programación III.
 
-Se propone desarrollar una aplicación destinada a gestionar y optimizar procesos de logística y distribución de productos.
+## Propósito y alcance implementado
 
-El sistema permitirá administrar depósitos, productos, pedidos, vehículos, conductores y destinos de entrega, centralizando la información y facilitando la planificación de las operaciones logísticas.
+La aplicación permite administrar productos y existencias por depósito, crear pedidos, reservar mercadería, asignar vehículos con conductor, despachar y registrar entregas. El circuito puede operarse desde una interfaz web local o desde un menú de consola. Los datos persisten en SQLite y se recuperan al reiniciar.
 
-Además de las funcionalidades tradicionales de gestión, se buscará incorporar herramientas de asistencia para la toma de decisiones, como la asignación de vehículos a pedidos, la optimización de rutas de distribución y la priorización de entregas según diferentes criterios.
+La versión concentra el desarrollo en un circuito logístico completo. La selección de depósito, productos y vehículo es manual. La prioridad ordena los pedidos en la consulta; no implementa un planificador de rutas ni garantiza ventanas horarias.
 
-El objetivo principal es desarrollar una solución que no solamente permita registrar y consultar operaciones, sino que también contribuya a mejorar la eficiencia de los procesos de distribución.
+## Arquitectura
 
-## 2. Funcionalidades principales
+El frontend usa HTML, CSS y JavaScript sin framework. Las páginas Gestión, Cargas, Seguimiento e Inicio intercambian JSON con una API FastAPI. Uvicorn sirve la aplicación y los archivos estáticos desde el mismo origen. La consola usa directamente los mismos repositorios que la API.
 
-- **Gestión de productos y depósitos:** registro de productos, control de existencias y administración de ubicaciones de almacenamiento.
-- **Gestión de pedidos:** creación, modificación y seguimiento de pedidos, incluyendo sus destinos y estados.
-- **Gestión de vehículos y conductores:** administración de vehículos, capacidades de carga, disponibilidad y conductores asignados.
-- **Planificación de entregas:** organización de pedidos según destinos, prioridades y disponibilidad de recursos.
-- **Optimización de rutas:** cálculo y comparación de alternativas para determinar recorridos eficientes.
-- **Asignación de recursos:** selección de vehículos y conductores según las características de los pedidos y las restricciones operativas.
-- **Estadísticas y reportes:** análisis de entregas realizadas, tiempos, utilización de vehículos y rendimiento general del sistema.
+El recorrido de una operación es interfaz → API → repositorio → SQLite. Las reglas de negocio permanecen en Python: modificar una pantalla no permite eludir las validaciones de stock o estado.
 
-## 3. Selección de lenguajes de programación
-
-Se propone utilizar **Python y JavaScript**, dos lenguajes multiparadigma que permiten combinar programación imperativa, orientada a objetos y funcional.
-
-La elección se fundamenta en las características particulares de cada lenguaje y en su adecuación a las distintas responsabilidades del sistema.
-
-### Python – Backend y procesamiento de información
-
-Python será utilizado principalmente para implementar la lógica del sistema, gestionar las operaciones logísticas y desarrollar los algoritmos de asignación y optimización.
-
-Se elige por su sintaxis expresiva, flexibilidad y facilidad para trabajar con estructuras de datos, cálculos y procesamiento de información.
-
-Sus principales responsabilidades serán:
-
-- Implementar las reglas de negocio y validaciones.
-- Administrar pedidos, depósitos y recursos logísticos.
-- Procesar información relacionada con las entregas.
-- Desarrollar algoritmos de asignación de vehículos.
-- Calcular y comparar alternativas de distribución.
-- Gestionar la comunicación con la base de datos.
-
-### JavaScript – Frontend e interacción con el usuario
-
-JavaScript será utilizado principalmente para desarrollar la interfaz de usuario y gestionar la interacción con el sistema.
-
-Se elige por su capacidad para desarrollar aplicaciones web interactivas y por permitir combinar diferentes paradigmas de programación.
-
-Sus principales responsabilidades serán:
-
-- Desarrollar la interfaz de gestión logística.
-- Permitir la creación y administración de pedidos.
-- Visualizar vehículos, destinos y entregas.
-- Presentar rutas y alternativas de distribución.
-- Mostrar estadísticas y reportes.
-- Gestionar eventos e interacciones del usuario.
-
-### Comunicación entre ambos lenguajes
-
-Se propone utilizar una arquitectura cliente-servidor, donde JavaScript se encargará de la interfaz y Python de la lógica del backend.
-
-La comunicación entre ambos componentes se realizará mediante una API REST, intercambiando información en formato JSON.
-
-## 4. Aplicación de los paradigmas de programación
-
-El desarrollo permitirá integrar diferentes paradigmas, aprovechando las características de ambos lenguajes.
-
-| Paradigma | Aplicación en el sistema |
+| Componente | Responsabilidad |
 |---|---|
-| Orientado a objetos | Modelado de pedidos, productos, vehículos, conductores y depósitos. |
-| Imperativo | Registro de operaciones, actualización de estados y coordinación de procesos. |
-| Funcional | Filtrado, transformación, agrupación y análisis de colecciones de datos. |
-| Declarativo | Consultas y expresiones que permitan especificar condiciones y resultados esperados. |
+| Backend/modelos/ | Representar productos, depósitos, pedidos, entregas, vehículos y conductores |
+| Backend/persistencia.py | Abrir SQLite, actualizar el esquema y administrar catálogo y existencias |
+| Backend/pedidos.py | Coordinar estados, reservas, asignación, despacho y entrega |
+| Backend/flota.py | Administrar vehículos, conductores y sus relaciones |
+| Backend/api.py | Validar solicitudes HTTP, traducir errores y serializar resultados |
+| Backend/main.py y consola.py | Arranque, datos iniciales y operación por terminal |
+| Frontend/api.js | Comunicación HTTP y presentación de errores |
+| Frontend/gestion.js, carga.js, seguimiento.js y app.js | Interacción y presentación de datos reales |
 
-Se buscará utilizar cada paradigma en aquellos componentes donde aporte mayor claridad, expresividad y facilidad de mantenimiento.
+La API abre y cierra una conexión por solicitud. No comparte una conexión SQLite global entre hilos. La base predeterminada se ubica respecto de los archivos del programa y puede sustituirse por una ruta de demostración. El primer arranque de una base vacía carga los valores definidos en schema.sql: tres productos, depósitos, conductores, vehículos y pedidos en borrador con sus ítems y existencias. Un marcador persistente evita repetir la carga o reponer datos modificados. Una base con registros propios se conserva sin agregar ejemplos.
 
-## 5. Criterios de elección
+## Flujo y reglas de negocio
 
-La selección de Python y JavaScript responde a los siguientes criterios:
+Un pedido inicia en Borrador. Sus ítems relacionan producto, depósito y cantidad entera positiva. Guardar una cantidad para la misma pareja reemplaza el total anterior. La prioridad admite 1 normal, 2 urgente y 3 crítica. Los horarios son opcionales; si se indican, deben formar una ventana HH:MM válida cuyo inicio preceda al fin.
 
-- **Naturaleza del problema:** el sistema requiere tanto procesamiento de información y algoritmos como una interfaz interactiva para administrar las operaciones.
-- **Características de los lenguajes:** ambos ofrecen mecanismos para combinar programación imperativa, orientada a objetos y funcional.
-- **Separación de responsabilidades:** permite diferenciar la lógica de negocio y el procesamiento de datos de la presentación e interacción con el usuario.
-- **Flexibilidad y expresividad:** facilitan implementar algoritmos, manipular colecciones y representar las entidades del dominio.
-- **Integración:** permiten establecer una comunicación entre frontend y backend mediante tecnologías web.
-- **Mantenibilidad:** la separación en componentes independientes facilita las pruebas, modificaciones y futuras ampliaciones.
+Confirmar valida todo el pedido. Si falta mercadería, devuelve los faltantes y conserva el borrador sin reservar parcialmente. Si alcanza, cambia a Confirmado y sus ítems pasan a representar reservas activas. Un pedido vacío no se confirma.
 
-## 6. Alcance inicial
+Un Confirmado necesita un vehículo Disponible, con conductor asignado y capacidad suficiente para su volumen completo. Un vehículo admite un solo pedido activo. Despachar cambia el pedido a Despachado, descuenta el stock y deja el vehículo En Ruta en una misma transacción. Repetir el despacho se rechaza para evitar descuentos duplicados.
 
-Se buscará desarrollar una primera versión funcional que contemple la administración de pedidos, productos, depósitos y vehículos, junto con mecanismos básicos de asignación de recursos y planificación de entregas.
+Entregar requiere un pedido Despachado y deja el vehículo Disponible. Cancelar solo está permitido antes del despacho: conserva el registro y libera reservas y ocupación del vehículo. Los pedidos confirmados no se editan; se cancelan y se crean nuevamente cuando corresponde.
 
-Posteriormente, se podrán incorporar algoritmos más avanzados para optimizar recorridos, distribuir cargas y mejorar la planificación logística.
+## Stock y consistencia
 
-La arquitectura propuesta permitirá ampliar las funcionalidades sin necesidad de modificar completamente la estructura del sistema.
+El catálogo contiene volumen y peso unitarios. La cantidad física pertenece a la pareja producto/depósito y no al objeto de catálogo. Se distinguen stock físico, reservado y disponible. Disponible es físico menos reservado.
+
+Las reservas se calculan desde los ítems de los pedidos Confirmados. No se mantiene una segunda tabla de reservas que pueda desincronizarse. Un retiro o traslado por consola no puede consumir unidades reservadas. Las reservas siguen ocupando espacio físico en el depósito.
+
+Los ingresos HTTP admiten una clave de operación guardada junto con el movimiento en una sola transacción. La web conserva esa clave mientras la respuesta esté pendiente: reintentar la misma operación después de perder la respuesta no duplica las unidades. La consulta posterior de la tabla se distingue de la confirmación del ingreso.
+
+SQLite aplica claves foráneas, unicidad y restricciones CHECK. Un índice único parcial impide que un vehículo figure en dos pedidos Confirmados o Despachados. Las escrituras usan BEGIN IMMEDIATE, y un error provoca rollback. Así se coordinan lecturas de disponibilidad y escrituras, incluso cuando dos solicitudes intentan confirmar al mismo tiempo.
+
+Las bases anteriores reciben columnas de horario y observaciones mediante una migración aditiva. También se corrige el nombre histórico obvservaciones. Se conserva un respaldo antes de intervenir sobre la base local.
+
+## Objetos y estado derivado
+
+Pedido reúne sus ítems y, cuando hay ventana horaria y una etapa operativa de entrega, compone un objeto Entrega. Su estado se deriva del pedido: Confirmado corresponde a Programada, Despachado a En Camino y Entregado a Completada. Borrador y Cancelado no se presentan como entregas en curso. Las observaciones y horarios se conservan en la cabecera aunque no exista un objeto Entrega.
+
+Los objetos devueltos por los repositorios son copias para consulta: modificar sus atributos no guarda cambios automáticamente. Las operaciones persistentes deben pasar por el repositorio correspondiente. Esto mantiene una única ruta para validar y actualizar los datos.
+
+## Paradigmas de programación
+
+| Paradigma o estilo | Evidencia concreta |
+|---|---|
+| Orientado a objetos | Clases Pedido, Producto, Vehiculo y Entrega; composición de Entrega en PedidosSQLite.obtener_pedido; repositorios que agrupan estado y operaciones |
+| Imperativo | Secuencia de validación y actualizaciones de PedidosSQLite.despachar y entregar; coordinación explícita de operaciones en la consola |
+| Funcional | sorted con una función lambda en el listado de pedidos de Backend/api.py crea una lista ordenada sin mutar la original; filter y map en Frontend/gestion.js y carga.js seleccionan y transforman colecciones |
+| Declarativo | SELECT, JOIN y GROUP BY describen consultas; CHECK, claves foráneas e índice único parcial expresan restricciones del dominio en schema.sql y la migración |
+
+Python concentra el modelado y las transacciones; JavaScript aporta eventos, asincronía e interacción con el DOM. El uso de filter o sorted constituye una aplicación de estilo funcional dentro de una aplicación multiparadigma, no una afirmación de que toda la solución sea funcional pura.
+
+## Interfaz y manejo de errores
+
+Las pantallas muestran datos de la API, incluidos los indicadores de pedidos pendientes, vehículos asignados, productos con stock y pedidos entregados. Los botones disponibles dependen del estado y se bloquean durante su operación para reducir envíos repetidos. El servidor vuelve a validar cada transición.
+
+La API rechaza datos de entrada inválidos con 422, reglas de negocio incumplidas con 400, pedidos inexistentes con 404 y faltantes o conflictos con 409. Los faltantes incluyen producto, depósito y cantidades. La web presenta mensajes legibles y conserva el formulario ante errores de red. Los datos ingresados se insertan mediante textContent para mostrarlos como texto.
+
+## Verificación
+
+La carpeta tests contiene pruebas de modelos, inventario y reservas, transacciones, migración, consola, API y navegador. Se usan SQLite real en memoria o archivos temporales. Se verifican faltantes sin reservas parciales, cancelación, vehículo ocupado, despacho único, rollback, conservación al reiniciar y confirmaciones concurrentes sin sobreventa.
+
+Las pruebas en Chromium recorren alta de producto, ingreso de stock, pedido con faltante, corrección, confirmación, asignación, despacho y entrega. También comprueban recarga, búsqueda inexistente, cancelación, fallos de red, texto con etiquetas HTML y ancho móvil. README.md documenta los comandos reproducibles y la instalación del navegador opcional.
+
+## Limitaciones y trabajo futuro
+
+La capacidad se valida por volumen en metros cúbicos. El peso en kilogramos es informativo. Cada vehículo transporta un pedido activo; no se consolidan recorridos. La ventana horaria se valida y muestra, pero no se calcula un horario de llegada.
+
+Depósitos, vehículos y conductores pueden registrarse desde la consola; la web utiliza los registros existentes, ingresados manualmente o provistos por la inicialización de schema.sql. Quedan pendientes las altas web de esas entidades, la edición de cabeceras y eliminación de ítems desde la web, bajas de catálogo, restricciones por peso, optimización de rutas, entregas parciales, devoluciones, estadísticas avanzadas y registro histórico de horas de transición.
+
+La aplicación está orientada a una demostración y operación local. No incorpora cuentas de usuario, autenticación ni despliegue público. Las instrucciones de instalación, operación y demostración se encuentran en README.md.
