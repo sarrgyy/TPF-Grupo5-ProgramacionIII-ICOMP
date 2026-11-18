@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS pedidos (
     prioridad INTEGER NOT NULL CHECK (typeof(prioridad) = 'integer' AND prioridad BETWEEN 1 AND 3),
     hora_inicio TEXT,
     hora_fin TEXT,
-    obvservaciones TEXT,
+    observaciones TEXT,
     estado TEXT NOT NULL DEFAULT 'Borrador'
         CHECK (estado IN ('Borrador', 'Confirmado', 'Despachado', 'Entregado', 'Cancelado')),
     patente_vehiculo TEXT REFERENCES vehiculos(patente),

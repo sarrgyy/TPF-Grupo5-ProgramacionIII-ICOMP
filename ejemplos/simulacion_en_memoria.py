@@ -1,11 +1,21 @@
-# main.py
+"""Simulación en memoria de la primera etapa del proyecto.
 
-from deposito import Deposito
-from productos import Producto
-from vehiculo import Vehiculo
-from conductor import Conductor
-from pedido import Pedido
-from entrega import Entrega
+Usa solo los modelos, sin base de datos. Se conserva como ejemplo de la
+evolución del sistema; el programa real es Backend/main.py.
+
+Ejecutar desde la carpeta que contiene Backend/:
+
+    python -m ejemplos.simulacion_en_memoria
+"""
+
+from Backend.modelos.deposito import Deposito
+from Backend.modelos.productos import Producto
+from Backend.modelos.vehiculo import Vehiculo
+from Backend.modelos.conductor import Conductor
+from Backend.modelos.pedido import Pedido
+from Backend.modelos.entrega import Entrega
+
+
 def main():
     print("--- INICIANDO SISTEMA DE GESTIÓN LOGÍSTICA ---")
     
@@ -44,9 +54,12 @@ def main():
         pedido_01.agregar_producto(prod_harina.nombre, cant_harina_p1, prod_harina.volumen_unitario)
 
     pedido_02 = Pedido(id_pedido="P-101", cliente="Despensa Centro", destino="Mitre 200", prioridad=1)
-    cant_leche_p2 = 50
     entrega_p02 = Entrega(id_entrega="ENT-101", cliente="Despensa Centro", direccion="Mitre 200", hora_inicio="13:00", hora_fin="17:00")
     pedido_02.entrega = entrega_p02
+
+    cant_leche_p2 = 50
+    if prod_leche.actualizar_stock(-cant_leche_p2):
+        pedido_02.agregar_producto(prod_leche.nombre, cant_leche_p2, prod_leche.volumen_unitario)
 
     # 4. Lógica Imperativa de Asignación
     print("\n[4] EJECUTANDO ALGORITMO DE ASIGNACIÓN IMPERATIVA")

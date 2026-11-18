@@ -127,7 +127,7 @@ class PedidosSQLite:
             (id_pedido,),
         ).fetchall()
 
-def crear_borrador(self, id_pedido, cliente, destino, prioridad=1, hora_inicio=None, hora_fin=None):
+    def crear_borrador(self, id_pedido, cliente, destino, prioridad=1, hora_inicio=None, hora_fin=None):
         """Guarda un pedido nuevo sin productos ni reservas, incluyendo ventana de entrega."""
         self._validar_cabecera(id_pedido, cliente, destino, prioridad)
         with self.inventario._transaccion():
@@ -137,7 +137,7 @@ def crear_borrador(self, id_pedido, cliente, destino, prioridad=1, hora_inicio=N
                 (id_pedido, cliente, destino, prioridad, hora_inicio, hora_fin),
             )
 
-def editar_borrador(self, id_pedido, cliente, destino, prioridad=1, hora_inicio=None, hora_fin=None, observaciones=None):
+    def editar_borrador(self, id_pedido, cliente, destino, prioridad=1, hora_inicio=None, hora_fin=None, observaciones=None):
         """Reemplaza la cabecera de un pedido que todavía es Borrador."""
         self._validar_cabecera(id_pedido, cliente, destino, prioridad)
         with self.inventario._transaccion():
@@ -148,7 +148,7 @@ def editar_borrador(self, id_pedido, cliente, destino, prioridad=1, hora_inicio=
                 (cliente, destino, prioridad, hora_inicio, hora_fin, observaciones, id_pedido),
             )
 
-def establecer_producto(self, id_pedido, id_deposito, id_producto, cantidad):
+    def establecer_producto(self, id_pedido, id_deposito, id_producto, cantidad):
         """Fija el total de una pareja depósito/producto del borrador.
 
         La cantidad reemplaza el total previo de esa pareja; no lo incrementa.
@@ -177,7 +177,7 @@ def establecer_producto(self, id_pedido, id_deposito, id_producto, cantidad):
                 (id_pedido, id_deposito, id_producto, cantidad),
             )
 
-def quitar_producto(self, id_pedido, id_deposito, id_producto):
+    def quitar_producto(self, id_pedido, id_deposito, id_producto):
         """Elimina una asignación depósito/producto de un borrador.
 
         Args:
@@ -197,7 +197,7 @@ def quitar_producto(self, id_pedido, id_deposito, id_producto):
             if cursor.rowcount == 0:
                 raise ValueError("El pedido no tiene ese producto de ese depósito.")
 
-def obtener_pedido(self, id_pedido):
+    def obtener_pedido(self, id_pedido):
         """Reconstruye una copia del pedido integrando su objeto Entrega por composición."""
         fila = self._cabecera(id_pedido)
         pedido = Pedido(fila["id_pedido"], fila["cliente"], fila["destino"], fila["prioridad"])
@@ -222,7 +222,7 @@ def obtener_pedido(self, id_pedido):
         pedido.volumen_total = sum(i["cantidad"] * i["volumen_unitario"] for i in pedido.productos)
         return pedido
 
-def listar_pedidos(self):
+    def listar_pedidos(self):
         """Lista copias completas de pedidos ordenadas por identificador.
 
         Returns:
@@ -231,7 +231,7 @@ def listar_pedidos(self):
         filas = self.conexion.execute("SELECT id_pedido FROM pedidos ORDER BY id_pedido").fetchall()
         return [self.obtener_pedido(fila[0]) for fila in filas]
 
-def confirmar(self, id_pedido):
+    def confirmar(self, id_pedido):
         """Reserva todas las cantidades o conserva el borrador sin reservar nada.
 
         No descuenta stock físico. Un faltante conserva el borrador editable sin
@@ -262,7 +262,7 @@ def confirmar(self, id_pedido):
                 raise StockInsuficiente(faltantes)
             self._cambiar_estado(id_pedido, "Confirmado")
 
-def _cambiar_estado(self, id_pedido, estado):
+    def _cambiar_estado(self, id_pedido, estado):
         """Escribe el estado dentro de una transición ya validada.
 
         El llamador valida el estado de origen y mantiene una transacción
@@ -274,7 +274,7 @@ def _cambiar_estado(self, id_pedido, estado):
         """
         self.conexion.execute("UPDATE pedidos SET estado = ? WHERE id_pedido = ?", (estado, id_pedido))
 
-def _validar_vehiculo(self, pedido, patente):
+    def _validar_vehiculo(self, pedido, patente):
         """Verifica disponibilidad, conductor y capacidad del pedido completo.
 
         Args:
@@ -300,7 +300,7 @@ def _validar_vehiculo(self, pedido, patente):
                     and not math.isclose(volumen, vehiculo.capacidad_maxima, rel_tol=1e-12, abs_tol=0))):
             raise ValueError("El vehículo no tiene capacidad para todo el pedido.")
 
-def asignar_vehiculo(self, id_pedido, patente):
+    def asignar_vehiculo(self, id_pedido, patente):
         """Ocupa un vehículo válido para un único pedido Confirmado.
 
         No despacha ni descuenta stock. Para cambiar de vehículo hay que
@@ -323,7 +323,7 @@ def asignar_vehiculo(self, id_pedido, patente):
             self.conexion.execute("UPDATE pedidos SET patente_vehiculo = ? WHERE id_pedido = ?",
                                   (patente, id_pedido))
 
-def liberar_vehiculo(self, id_pedido):
+    def liberar_vehiculo(self, id_pedido):
         """Quita el vehículo del Confirmado sin liberar su mercadería.
 
         Args:
@@ -339,7 +339,7 @@ def liberar_vehiculo(self, id_pedido):
             self.conexion.execute("UPDATE pedidos SET patente_vehiculo = NULL WHERE id_pedido = ?",
                                   (id_pedido,))
 
-def cancelar(self, id_pedido):
+    def cancelar(self, id_pedido):
         """Cancela antes del despacho y libera reservas y ocupación del vehículo.
 
         Conserva ítems y patente histórica; no descuenta mercadería.
@@ -354,7 +354,7 @@ def cancelar(self, id_pedido):
             self._exigir_estado(id_pedido, "Borrador", "Confirmado")
             self._cambiar_estado(id_pedido, "Cancelado")
 
-def despachar(self, id_pedido):
+    def despachar(self, id_pedido):
         """Guarda stock descontado, pedido Despachado y vehículo En Ruta juntos.
 
         Revalida la flota. Si falla una escritura, se revierten stock, reservas,
@@ -382,7 +382,7 @@ def despachar(self, id_pedido):
             self.conexion.execute("UPDATE vehiculos SET estado = 'En Ruta' WHERE patente = ?",
                                   (pedido.vehiculo_asignado,))
 
-def entregar(self, id_pedido):
+    def entregar(self, id_pedido):
         """Finaliza el pedido y deja su vehículo Disponible sin otro retiro.
 
         Conserva conductor y patente histórica. Los pedidos antiguos despachados

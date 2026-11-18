@@ -1,84 +1,116 @@
-# main.py
+"""Punto de entrada del Sistema de Gestión Logística y Distribución.
 
-# Importamos las clases que modelamos en la Fase 1
-from modelos.deposito import Deposito
-from modelos.productos import Producto
-from modelos.vehiculo import Vehiculo
-from modelos.conductor import Conductor
-from modelos.pedido import Pedido
-from modelos.entrega import Entrega 
+Se ejecuta como módulo, desde la carpeta que contiene Backend/:
 
-def main():
-    print("--- INICIANDO SISTEMA DE GESTIÓN LOGÍSTICA ---")
-    
-    # 1. Instanciación del Depósito y control de espacio
-    print("\n[1] CONFIGURANDO DEPÓSITO Y STOCK INICIAL")
-    deposito_central = Deposito(id_deposito="D-001", nombre="Base Bariloche", ubicacion="Ruta 40 Sur", capacidad=1000.0)
-    
-    prod_leche = Producto(id_producto="PRD-1", nombre="Cajas de Leche", volumen_unitario=0.5, peso_unitario=1.0, stock_inicial=500)
-    prod_harina = Producto(id_producto="PRD-2", nombre="Bolsas de Harina", volumen_unitario=0.2, peso_unitario=0.5, stock_inicial=800)
-    
-    # 2. Configuración de la Flota
-    print("\n[2] PREPARANDO FLOTA DE DISTRIBUCIÓN")
-    furgon_1 = Vehiculo(patente="AB123CD", capacidad=20.0)
-    camioneta_1 = Vehiculo(patente="EF456GH", capacidad=10.0)
-    
-    chofer_1 = Conductor(dni="30111222", nombre="Carlos Gómez")
-    chofer_2 = Conductor(dni="31333444", nombre="Ana Silva")
-    
-    furgon_1.asignar_conductor(chofer_1.nombre)
-    chofer_1.asignar_vehiculo(furgon_1.patente)
-    camioneta_1.asignar_conductor(chofer_2.nombre)
-    chofer_2.asignar_vehiculo(camioneta_1.patente)
+    python -m Backend.main                # menú interactivo
+    python -m Backend.main --resumen      # imprime el estado y termina
+    python -m Backend.main --db otra.db   # usa otra base de datos
 
-    # 3. Creación y Recepción de Pedidos con Entregas
-    print("\n[3] INGRESANDO PEDIDOS Y PROGRAMANDO ENTREGAS")
-    # Instanciamos el pedido y su entrega correspondiente
-    pedido_01 = Pedido(id_pedido="P-100", cliente="Supermercado Sur", destino="Av. Pioneros 4500", prioridad=2)
-    entrega_p01 = Entrega(id_entrega="ENT-100", cliente="Supermercado Sur", direccion="Av. Pioneros 4500", hora_inicio="08:00", hora_fin="12:00")
-    
-    cant_leche_p1 = 20
-    if prod_leche.actualizar_stock(-cant_leche_p1):
-        pedido_01.agregar_producto(prod_leche.nombre, cant_leche_p1, prod_leche.volumen_unitario)
-        
-    cant_harina_p1 = 30
-    if prod_harina.actualizar_stock(-cant_harina_p1):
-        pedido_01.agregar_producto(prod_harina.nombre, cant_harina_p1, prod_harina.volumen_unitario)
+En la primera ejecución, con la base vacía, se cargan datos de demostración.
+Las siguientes ejecuciones conservan lo guardado y no repiten la carga.
+"""
 
-    pedido_02 = Pedido(id_pedido="P-101", cliente="Despensa Centro", destino="Mitre 200", prioridad=1)
-    entrega_p02 = Entrega(id_entrega="ENT-101", cliente="Despensa Centro", direccion="Mitre 200", hora_inicio="13:00", hora_fin="17:00")
-    
-    cant_leche_p2 = 50
-    if prod_leche.actualizar_stock(-cant_leche_p2):
-        pedido_02.agregar_producto(prod_leche.nombre, cant_leche_p2, prod_leche.volumen_unitario)
+import argparse
+from pathlib import Path
 
-    # 4. Lógica Imperativa de Asignación 
-    print("\n[4] EJECUTANDO ALGORITMO DE ASIGNACIÓN IMPERATIVA")
-    pedidos_pendientes = [(pedido_01, entrega_p01), (pedido_02, entrega_p02)] # Agrupamos pedido y entrega
-    flota_disponible = [furgon_1, camioneta_1]
-    
-    for pedido, entrega in pedidos_pendientes:
-        asignado = False
-        for vehiculo in flota_disponible:
-            espacio_libre = vehiculo.capacidad_maxima - vehiculo.volumen_ocupado
-            if vehiculo.estado == "Disponible" and espacio_libre >= pedido.volumen_total:
-                vehiculo.asignar_pedido(pedido)
-                entrega.actualizar_estado("En Camino") # Actualizamos la entrega mediante un mensaje
-                asignado = True
-                break 
-        
-        if not asignado:
-            print(f"Alerta: No se encontró vehículo con capacidad suficiente para el pedido {pedido.id_pedido}.")
+from .consola import ejecutar_menu, mostrar_flota, mostrar_inventario, mostrar_pedidos
+from .flota import FlotaSQLite
+from .modelos.conductor import Conductor
+from .modelos.deposito import Deposito
+from .modelos.productos import Producto
+from .modelos.vehiculo import Vehiculo
+from .persistencia import InventarioSQLite
 
-    # 5. Salida de Datos y Resumen del Estado
-    print("\n[5] RESUMEN DE OPERACIONES Y ESTADOS")
-    print("\n--- Entregas Programadas ---")
-    print(entrega_p01.obtener_info())
-    print(entrega_p02.obtener_info())
-    
-    print("\n--- Conductores ---")
-    print(chofer_1.obtener_info())
-    print(chofer_2.obtener_info())
+RUTA_DB_POR_DEFECTO = Path(__file__).with_name("logistica.db")
+
+
+def cargar_datos_demo(inventario):
+    """Carga productos, depósitos, existencias y flota si la base está vacía.
+
+    Volumen en metros cúbicos y peso en kilogramos. Cada parte se carga solo
+    si todavía no hay datos de su tipo, así que es seguro llamarla siempre.
+
+    Args:
+        inventario (InventarioSQLite): Sesión abierta que se reutiliza.
+
+    Returns:
+        bool: True si se cargaron datos de demostración; False si ya había.
+    """
+    productos = [
+        Producto("PRD-1", "Pantalón", 0.004, 0.5),
+        Producto("PRD-2", "Campera", 0.008, 0.9),
+        Producto("PRD-3", "Remera", 0.002, 0.2),
+        Producto("PRD-4", "Buzo Space Monochrome", 0.006, 0.6),
+    ]
+    depositos = [
+        Deposito("D-001", "Depósito Centro", "Centro, Bariloche", 50.0),
+        Deposito("D-002", "Depósito Melipal", "Melipal, Bariloche", 30.0),
+        Deposito("D-003", "Depósito Dina Huapi", "Dina Huapi", 20.0),
+    ]
+    existencias = [
+        ("D-001", "PRD-1", 200), ("D-001", "PRD-2", 100),
+        ("D-001", "PRD-3", 300), ("D-001", "PRD-4", 150),
+        ("D-002", "PRD-1", 100), ("D-002", "PRD-3", 200),
+        ("D-003", "PRD-4", 80),
+    ]
+    cargado = inventario.cargar_iniciales(productos, depositos, existencias)
+
+    flota = FlotaSQLite(inventario)
+    if not flota.listar_vehiculos() and not flota.listar_conductores():
+        for patente, capacidad in (("AB123CD", 3.0), ("EF456GH", 2.5), ("IJ789KL", 20.0)):
+            flota.registrar_vehiculo(Vehiculo(patente, capacidad))
+        for dni, nombre in (("28555111", "Juan Pérez"), ("30111222", "Carlos Gómez"),
+                            ("31333444", "Ana Silva")):
+            flota.registrar_conductor(Conductor(dni, nombre))
+        flota.asignar_conductor("AB123CD", "28555111")
+        flota.asignar_conductor("EF456GH", "30111222")
+        flota.asignar_conductor("IJ789KL", "31333444")
+        cargado = True
+
+    if cargado:
+        print("Datos de demostración cargados.")
+    return cargado
+
+
+def _leer_argumentos(argv):
+    """Interpreta los argumentos de la línea de comandos.
+
+    Args:
+        argv (list[str] | None): Argumentos; None usa los de sys.argv.
+
+    Returns:
+        argparse.Namespace: Atributos db (ruta) y resumen (bool).
+    """
+    parser = argparse.ArgumentParser(
+        prog="python -m Backend.main",
+        description="Sistema de Gestión Logística y Distribución.",
+    )
+    parser.add_argument("--db", default=RUTA_DB_POR_DEFECTO,
+                        help="archivo SQLite a usar (por defecto, Backend/logistica.db)")
+    parser.add_argument("--resumen", action="store_true",
+                        help="imprime inventario, pedidos y flota, y termina")
+    return parser.parse_args(argv)
+
+
+def main(argv=None):
+    """Abre la base, prepara los datos de demostración y lanza el programa.
+
+    La conexión se cierra al salir, incluso ante errores.
+
+    Args:
+        argv (list[str] | None): Argumentos; None usa los de sys.argv.
+    """
+    argumentos = _leer_argumentos(argv)
+    with InventarioSQLite(argumentos.db) as inventario:
+        cargar_datos_demo(inventario)
+        if argumentos.resumen:
+            mostrar_inventario(inventario)
+            mostrar_pedidos(inventario)
+            mostrar_flota(inventario)
+        else:
+            print("--- SISTEMA DE GESTIÓN LOGÍSTICA ---")
+            ejecutar_menu(inventario)
+
 
 if __name__ == "__main__":
     main()

@@ -6,6 +6,7 @@ class Vehiculo:
         self.estado = estado
         self.pedidos = []
         self.conductor_asignado = None     
+        self.pedido_asignado = None        # id del pedido activo (lo informa la persistencia)
 
     def asignar_pedido(self, pedido):
         espacio_disponible = self.capacidad_maxima - self.volumen_ocupado
@@ -55,4 +56,4 @@ class Vehiculo:
             print(f"El vehículo {self.patente} no tenía conductor asignado.")
 
     def tiene_pedido(self, pedido):
-        return pedido in self.pedidos
+        return pedido in self.pedidos
