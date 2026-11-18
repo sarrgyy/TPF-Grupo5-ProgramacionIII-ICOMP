@@ -1,93 +1,27 @@
-"""Simulación en memoria de la primera etapa del proyecto.
+"""Demostración sin archivos: python -m ejemplos.simulacion_en_memoria.
 
-Usa solo los modelos, sin base de datos. Se conserva como ejemplo de la
-evolución del sistema; el programa real es Backend/main.py.
-
-Ejecutar desde la carpeta que contiene Backend/:
-
-    python -m ejemplos.simulacion_en_memoria
+Usa SQLite :memory: y las mismas reglas que la consola y la API.
 """
-
-from Backend.modelos.deposito import Deposito
-from Backend.modelos.productos import Producto
-from Backend.modelos.vehiculo import Vehiculo
-from Backend.modelos.conductor import Conductor
-from Backend.modelos.pedido import Pedido
-from Backend.modelos.entrega import Entrega
+from Backend.consola import mostrar_flota, mostrar_pedidos
+from Backend.main import cargar_datos_base
+from Backend.pedidos import PedidosSQLite
+from Backend.persistencia import InventarioSQLite
 
 
 def main():
-    print("--- INICIANDO SISTEMA DE GESTIÓN LOGÍSTICA ---")
-    
-    # 1. Instanciación del Depósito y control de espacio
-    print("\n[1] CONFIGURANDO DEPÓSITO Y STOCK INICIAL")
-    deposito_central = Deposito(id_deposito="D-001", nombre="Base Bariloche", ubicacion="Ruta 40 Sur", capacidad=1000.0)
-    
-    # Creamos los productos
-    prod_leche = Producto(id_producto="PRD-1", nombre="Cajas de Leche", volumen_unitario=0.5, peso_unitario=1.0, stock_inicial=500)
-    prod_harina = Producto(id_producto="PRD-2", nombre="Bolsas de Harina", volumen_unitario=0.2, peso_unitario=0.5, stock_inicial=800)
-    
-    # 2. Configuración de la Flota (Vehículos y Conductores)
-    print("\n[2] PREPARANDO FLOTA DE DISTRIBUCIÓN")
-    furgon_1 = Vehiculo(patente="AB123CD", capacidad=20.0)
-    camioneta_1 = Vehiculo(patente="EF456GH", capacidad=10.0)
-    
-    chofer_1 = Conductor(dni="30111222", nombre="Carlos Gómez")
-    chofer_2 = Conductor(dni="31333444", nombre="Ana Silva")
-    
-    # Asignación de choferes a vehículos mediante intercambio de mensajes
-    furgon_1.asignar_conductor(chofer_1)
-    chofer_1.asignar_vehiculo(furgon_1.patente)
-    
-    camioneta_1.asignar_conductor(chofer_2)
-    chofer_2.asignar_vehiculo(camioneta_1.patente)
+    """Ejecuta el circuito hasta Entregado en SQLite en memoria y muestra el resumen."""
+    with InventarioSQLite(":memory:") as inv:
+        cargar_datos_base(inv)
+        pedidos = PedidosSQLite(inv)
+        pedidos.crear_borrador("DEMO", "Cliente de demostración", "Centro, Bariloche")
+        pedidos.establecer_producto("DEMO", "D-001", "PRD-1", 2)
+        pedidos.confirmar("DEMO")
+        pedidos.asignar_vehiculo("DEMO", "AB123CD")
+        pedidos.despachar("DEMO")
+        pedidos.entregar("DEMO")
+        mostrar_pedidos(inv)
+        mostrar_flota(inv)
 
-    # 3. Creación y Recepción de Pedidos
-    print("\n[3] INGRESANDO PEDIDOS DEL DÍA")
-    pedido_01 = Pedido(id_pedido="P-100", cliente="Supermercado Sur", destino="Av. Pioneros 4500", prioridad=2)
-    
-    entrega_p01 = Entrega(id_entrega="ENT-100", cliente="Supermercado Sur", direccion="Av. Pioneros 4500", hora_inicio="08:00", hora_fin="12:00")
-    pedido_01.entrega = entrega_p01
-        
-    cant_harina_p1 = 30
-    if prod_harina.actualizar_stock(-cant_harina_p1):
-        pedido_01.agregar_producto(prod_harina.nombre, cant_harina_p1, prod_harina.volumen_unitario)
-
-    pedido_02 = Pedido(id_pedido="P-101", cliente="Despensa Centro", destino="Mitre 200", prioridad=1)
-    entrega_p02 = Entrega(id_entrega="ENT-101", cliente="Despensa Centro", direccion="Mitre 200", hora_inicio="13:00", hora_fin="17:00")
-    pedido_02.entrega = entrega_p02
-
-    cant_leche_p2 = 50
-    if prod_leche.actualizar_stock(-cant_leche_p2):
-        pedido_02.agregar_producto(prod_leche.nombre, cant_leche_p2, prod_leche.volumen_unitario)
-
-    # 4. Lógica Imperativa de Asignación
-    print("\n[4] EJECUTANDO ALGORITMO DE ASIGNACIÓN IMPERATIVA")
-    pedidos_pendientes = [pedido_01, pedido_02]
-    flota_disponible = [furgon_1, camioneta_1]
-    
-    # Iteración clásica imperativa para coordinar operaciones
-    for pedido in pedidos_pendientes:
-        asignado = False
-        for vehiculo in flota_disponible:
-            espacio_libre = vehiculo.capacidad_maxima - vehiculo.volumen_ocupado
-            if vehiculo.estado == "Disponible" and espacio_libre >= pedido.volumen_total:
-                vehiculo.asignar_pedido(pedido)
-                asignado = True
-                break 
-        
-        if not asignado:
-            print(f"Alerta: No se encontró vehículo con capacidad suficiente para el pedido {pedido.id_pedido}.")
-
-    # 5. Salida de Datos y Resumen del Estado
-    print("\n[5] RESUMEN DE OPERACIONES Y ESTADOS")
-    print("\n--- Conductores ---")
-    print(chofer_1.obtener_info())
-    print(chofer_2.obtener_info())
-    
-    print("\n--- Inventario Final ---")
-    print(f"{prod_leche.nombre}: {prod_leche.stock} unidades")
-    print(f"{prod_harina.nombre}: {prod_harina.stock} unidades")
 
 if __name__ == "__main__":
     main()

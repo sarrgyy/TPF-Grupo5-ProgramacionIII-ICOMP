@@ -23,6 +23,39 @@ body {
 }
 
 /* Cabecera */
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+input, textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; font: inherit; }
+textarea { resize: vertical; }
+fieldset { border: 0; min-width: 0; }
+fieldset:disabled { opacity: .65; }
+button:disabled { cursor: wait; opacity: .6; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }
+.message { margin: 20px 25px 0; padding: 14px; border-radius: 5px; overflow-wrap: anywhere; }
+.message--success { background: #dcfce7; color: #14532d; }
+.message--error { background: #fee2e2; color: #991b1b; }
+.message--warning { background: #fef3c7; color: #92400e; }
+.table-scroll { max-width: 100%; overflow-x: auto; }
+@media (max-width: 600px) {
+    .table-capacidad th, .table-capacidad td { padding: 8px 4px; font-size: .75rem; }
+}
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 15px; margin-top: 15px; }
+.actions a.btn-secondary { text-decoration: none; padding: 10px 16px; border-radius: 5px; }
+.instructions { padding-left: 22px; }
+.instructions li, aside p { margin-bottom: 12px; }
+.pedido-pasos { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin-bottom: 20px; }
+.pedido-pasos li { padding: 8px 12px; border-radius: 5px; background: #f1f5f9; color: #475569; }
+.pedido-pasos li[aria-current="step"] { background: #dbeafe; color: #1e40af; font-weight: 600; }
+.pedido-pasos li.completado { background: #dcfce7; color: #166534; }
+.pedido-flujo h3 { margin-bottom: 12px; color: #1e293b; }
+.pedido-flujo h3:focus { outline: 3px solid #2563eb; outline-offset: 3px; }
+.retomar-pedido summary { cursor: pointer; font-weight: 600; color: #1e293b; }
+.retomar-pedido[open] summary { margin-bottom: 15px; }
+.estado-borrador { background: #fef3c7; color: #92400e; }
+.estado-confirmado { background: #dbeafe; color: #1e40af; }
+.estado-despachado { background: #ede9fe; color: #5b21b6; }
+.estado-entregado { background: #dcfce7; color: #166534; }
+.estado-cancelado { background: #fee2e2; color: #991b1b; }
 header {
     background-color: #1e293b;
     color: #ffffff;
@@ -43,6 +76,7 @@ nav {
 
 nav ul {
     display: flex;
+    flex-wrap: wrap;
     list-style: none;
     gap: 20px;
 }
@@ -68,7 +102,8 @@ nav ul li a:hover {
 
 #content {
     flex: 3; /* Ocupa el 75% del espacio */
-    min-width: 300px;
+    min-width: 0;
+    flex-basis: 600px;
     padding: 25px;
     background-color: #ffffff;
 }
@@ -195,8 +230,8 @@ button {
     background-color: #2563eb;
     color: white;
     display: block;
-    text-align: center; 
-    text-decoration: none; 
+    text-align: center;
+    text-decoration: none;
     margin-top: 20px;
 }
 
@@ -239,6 +274,8 @@ nav ul li a.activo{
 
 .tracking-search {
     display: flex;
+    flex-wrap: wrap;
+    align-items: end;
     gap: 10px;
 
 }
@@ -272,10 +309,12 @@ nav ul li a.activo{
 }
 .form-row {
     display: flex;
+    flex-wrap: wrap;
     gap: 15px;
 }
 .form-group {
     flex: 1;
+    min-width: 170px;
 }
 /* Fila para agregar productos */
 .add-product-row {
@@ -318,14 +357,14 @@ nav ul li a.activo{
 }
 
 .tabs {
-    display: flex; 
-    gap: 10px; 
-    margin-bottom: 20px; 
-    border-bottom: 2px solid #e2e8f0; 
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #e2e8f0;
     padding-bottom: 10px;
 }
 
-.tab-btn { 
+.tab-btn {
     background-color: #f1f5f9;
      color: #475569;
 }
@@ -335,8 +374,8 @@ nav ul li a.activo{
 }
 .btn-edit{
     background-color: #fef3c7;
-    color: #b45309; 
-    padding: 5px 10px; 
+    color: #b45309;
+    padding: 5px 10px;
     margin-right: 5px;
 }
 

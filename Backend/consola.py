@@ -320,10 +320,10 @@ class MenuConsola:
         print(f"{pedido.id_pedido} — {pedido.cliente}: {pedido.estado}")
         print(f"Destino: {pedido.destino}; prioridad: {pedido.prioridad}; "
               f"vehículo: {pedido.vehiculo_asignado or 'sin asignar'}")
-        if pedido.entrega is not None:
-            print(f"Ventana de entrega: {pedido.entrega.hora_inicio} - {pedido.entrega.hora_fin}")
-            if pedido.entrega.observaciones:
-                print(f"Observaciones: {pedido.entrega.observaciones}")
+        if pedido.hora_inicio:
+            print(f"Ventana de entrega: {pedido.hora_inicio} - {pedido.hora_fin}")
+        if pedido.observaciones:
+            print(f"Observaciones: {pedido.observaciones}")
         if not pedido.productos:
             print("Sin productos.")
         for item in pedido.productos:

@@ -1,20 +1,31 @@
+"""Representa las condiciones de entrega asociadas a un pedido."""
 # entrega.py
 
 class Entrega:
-    """
-    Representa el destino y las condiciones de entrega de un pedido.
-    Es responsable de gestionar su estado (completada, fallida, etc.) y validar su ventana horaria.
+    """Conserva destino, ventana horaria y estado local de una entrega.
+
+    PedidosSQLite valida la ventana y deriva el estado al reconstruir
+    un pedido. Este modelo conserva los valores que recibe.
+
+    Attributes:
+        id_entrega (str): Identificador de la entrega.
+        cliente (str): Destinatario.
+        direccion (str): Dirección de entrega.
+        hora_inicio (str): Inicio de ventana, en HH:MM.
+        hora_fin (str): Fin de ventana, en HH:MM.
+        estado (str): Programada, En Camino, Completada o Fallida.
+        observaciones (str): Notas locales sobre la entrega.
     """
     
     def __init__(self, id_entrega, cliente, direccion, hora_inicio, hora_fin):
-        """
-        Inicializa una nueva entrega con su identidad y estado inicial.
-        
-        :param id_entrega: Identificador único de la entrega.
-        :param cliente: Nombre del cliente o empresa receptora.
-        :param direccion: Dirección física del destino de entrega.
-        :param hora_inicio: Hora de inicio de la ventana de entrega (ej. "09:00").
-        :param hora_fin: Hora de finalización de la ventana de entrega (ej. "13:00").
+        """Crea una entrega Programada con la ventana proporcionada.
+
+        Args:
+            id_entrega (str): Identificador de la entrega.
+            cliente (str): Destinatario.
+            direccion (str): Dirección de entrega.
+            hora_inicio (str): Inicio de ventana en HH:MM.
+            hora_fin (str): Fin de ventana en HH:MM.
         """
         self.id_entrega = id_entrega
         self.cliente = cliente
@@ -27,11 +38,14 @@ class Entrega:
         self.observaciones = ""
 
     def actualizar_estado(self, nuevo_estado, observaciones=""):
-        """
-        Modifica el estado actual de la entrega y registra observaciones si es necesario.
-        
-        :param nuevo_estado: El nuevo estado de la entrega.
-        :param observaciones: Notas adicionales (ej. motivo de entrega fallida).
+        """Actualiza estado y notas si el nombre del estado es válido.
+
+        Args:
+            nuevo_estado (str): Programada, En Camino, Completada o Fallida.
+            observaciones (str): Notas que reemplazan las anteriores.
+
+        Returns:
+            bool: True si se actualizó; False si se rechazó el estado.
         """
         estados_validos = ["Programada", "En Camino", "Completada", "Fallida"]
         if nuevo_estado in estados_validos:
@@ -46,8 +60,10 @@ class Entrega:
             return False
 
     def obtener_info(self):
-        """
-        Retorna un diccionario con la información y el estado actual de la entrega.
+        """Construye el detalle legible de destino, ventana y estado.
+
+        Returns:
+            dict[str, str]: Identidad, destinatario, dirección, ventana y notas.
         """
         return {
             "ID Entrega": self.id_entrega,

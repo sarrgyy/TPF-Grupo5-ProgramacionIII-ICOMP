@@ -1,19 +1,37 @@
+"""Define el producto y su contador de stock para operaciones en memoria."""
 
 class Producto:
+    """Representa una unidad de catálogo y un stock local de simulación.
+
+    El stock persistente pertenece a existencias por depósito y se opera
+    mediante InventarioSQLite; modificar este objeto no escribe en la base.
+
+    Attributes:
+        id_producto (str): Identificador del catálogo.
+        nombre (str): Descripción visible del producto.
+        volumen_unitario (float): Volumen de una unidad, en m³.
+        peso_unitario (float): Peso de una unidad, en kg.
+        stock (int): Cantidad local, independiente de las existencias SQLite.
     """
-    Representa un producto dentro del sistema de gestión logística.
-    """
-    
+
     def __init__(self, id_producto, nombre, volumen_unitario, peso_unitario, stock_inicial=0):
+        """Inicializa los datos del catálogo y valida el stock local.
+
+        Las medidas se validan al registrar el producto en el repositorio
+        o al utilizarlas para calcular la carga de un pedido.
+
+        Args:
+            id_producto (str): Identificador del producto.
+            nombre (str): Nombre del producto.
+            volumen_unitario (float): Volumen por unidad en m³.
+            peso_unitario (float): Peso por unidad en kg.
+            stock_inicial (int): Unidades locales iniciales; por defecto, cero.
+
+        Raises:
+            ValueError: El stock inicial no es un entero no negativo.
         """
-        Inicializa un nuevo producto con su identidad y estado inicial.
-        
-        :param id_producto: Identificador único del producto (Identidad).
-        :param nombre: Nombre descriptivo del producto.
-        :param volumen_unitario: Volumen que ocupa una unidad (clave para la capacidad del vehículo).
-        :param peso_unitario: Peso de una unidad (útil para restricciones de carga).
-        :param stock_inicial: Cantidad disponible en el depósito al crear el producto.
-        """
+        if type(stock_inicial) is not int or stock_inicial < 0:
+            raise ValueError("El stock inicial debe ser un entero no negativo.")
         self.id_producto = id_producto
         self.nombre = nombre
         self.volumen_unitario = volumen_unitario
@@ -21,11 +39,19 @@ class Producto:
         self.stock = stock_inicial
 
     def actualizar_stock(self, cantidad):
+        """Aplica un ingreso o retiro al contador local de unidades.
+
+        Args:
+            cantidad (int): Variación entera; positiva ingresa y negativa retira.
+
+        Returns:
+            bool: True si se actualizó; False si el retiro dejaría stock negativo.
+
+        Raises:
+            ValueError: La cantidad no es un entero o es un booleano.
         """
-        Modifica el stock disponible del producto.         
-        :param cantidad: Valor entero (positivo para ingresos, negativo para salidas).
-        :return: Booleano indicando si la operación fue exitosa.
-        """
+        if type(cantidad) is not int:
+            raise ValueError("La cantidad debe ser un número entero.")
         if self.stock + cantidad >= 0:
             self.stock += cantidad
             operacion = "ingresadas" if cantidad > 0 else "retiradas"
@@ -34,7 +60,3 @@ class Producto:
         else:
             print(f"Error: No hay suficiente stock de '{self.nombre}' para retirar {abs(cantidad)} unidades. Stock actual: {self.stock}")
             return False
-
-
-
-        
