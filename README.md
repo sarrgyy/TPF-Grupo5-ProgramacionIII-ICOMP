@@ -52,6 +52,12 @@ En **Gestión**, la sección **Espacio de los depósitos** muestra una fila por 
 
 ## Consola y ejemplo
 
+El atajo `ejecutar.py` inicia el mismo menú que `python -m Backend.main` y acepta los mismos argumentos, como `--db` y `--resumen`:
+
+```powershell
+.\.venv\Scripts\python.exe ejecutar.py
+```
+
 ```powershell
 .\.venv\Scripts\python.exe -m Backend.main
 .\.venv\Scripts\python.exe -m Backend.main --resumen
