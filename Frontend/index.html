@@ -1,99 +1,17 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Seguimiento Logístico</title>
-    <link rel="stylesheet" href="styles.css">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inicio · Gestión Logística</title><link rel="stylesheet" href="styles.css">
+<script src="api.js" defer></script><script src="app.js" defer></script>
 </head>
-<body>
-    <div id="container">
-        <header>
-            <h1>Sistema de Seguimiento de Logística y Distribución</h1>
-        </header>
-
-        <nav>
-            <ul>
-                <li><a href="index.html" class="activo">Inicio</a></li>
-                <li><a href="gestion.html">Gestion</a></li>
-                <li><a href="cargas.html">Cargar</a></li>
-                <li><a href="seguimiento.html">Seguimiento</a></li>
-            </ul>
-        </nav>
-
-        <div class="main-wrapper">
-            <section id="content">
-                <div class="kpi-container">
-                    <div class="kpi-card">
-                        <h3>Envíos Pendientes</h3>
-                        <p class="kpi-number">14</p>
-                    </div>
-                    <div class="kpi-card">
-                        <h3>Vehiculos Asignados</h3>
-                        <p class="kpi-number">5</p>
-                    </div>
-                    <div class="kpi-card">
-                        <h3>Productos en Stock</h3>
-                        <p class="kpi-number">15</p>
-                    </div>
-                    <div class="kpi-card">
-                        <h3>Destinos Recurrentes</h3>
-                        <p class="kpi-number">8</p>
-                    </div>
-                </div>
-                <article class="card">
-                    <h2>Resumen de operaciones</h2>
-                    <p>Estado general de los envíos y control de inventario activo.</p>
-                </article>
-
-                <div class="card" id="productos">
-                    <h2>Productos en tránsito</h2>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Codigo</th>
-                                <th>Destino</th>
-                                <th>Prioridad</th>
-                                <th>Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Fila de ejemplo para visualizar el diseño -->
-                            <tr>
-                                <td>#015</td>
-                                <td>Invap</td>
-                                <td>3</td>
-                                <td><span class="badge pendiente">Pendiente</span></td>
-                            </tr>
-                            <tr>
-                                <td>#002</td>
-                                <td>Sede Malvinas UNRN</td>
-                                <td>2</td>
-                                <td><span class="badge entregado">Entregado</span></td>
-                            </tr>
-                            <tr>
-                                <td>#003</td>
-                                <td>Garibaldi 170</td>
-                                <td>2</td>
-                                <td><span class="badge preparado">Preparado</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            <aside>
-                <ul class="alert-list">
-                    <li>Demora en ruta 40</li>
-                    <li>Stock bajo en Buzo Space Monochrome</li>
-                </ul>
-                <a href="cargas.html" class="btn-primary">Nuevo Envío</a>
-            </aside>
-        </div>
-
-        <footer>
-            Grupo 5 Web &copy; 2026
-        </footer>
-    </div>
-</body>
-</html>
+<body><div id="container">
+<header><h1>Sistema de Gestión Logística y Distribución</h1></header>
+<nav aria-label="Navegación principal"><ul><li><a href="index.html" class="activo" aria-current="page">Inicio</a></li><li><a href="gestion.html">Gestión</a></li><li><a href="cargas.html">Cargas</a></li><li><a href="seguimiento.html">Seguimiento</a></li></ul></nav>
+<div id="mensaje" class="message" role="status" aria-live="polite" hidden></div>
+<div class="main-wrapper"><main id="content">
+<section class="kpi-container" aria-label="Indicadores de operaciones"><div class="kpi-card"><h2>Pedidos pendientes</h2><p id="kpi-pendientes" class="kpi-number">—</p></div><div class="kpi-card"><h2>Vehículos asignados</h2><p id="kpi-asignados" class="kpi-number">—</p></div><div class="kpi-card"><h2>Productos con stock</h2><p id="kpi-stock" class="kpi-number">—</p></div><div class="kpi-card"><h2>Pedidos entregados</h2><p id="kpi-entregados" class="kpi-number">—</p></div></section>
+<section class="card"><h2>Pedidos registrados</h2><p>Ordenados por prioridad, comenzando por los más urgentes.</p><div class="table-scroll"><table><thead><tr><th>Código</th><th>Cliente</th><th>Destino</th><th>Prioridad</th><th>Estado</th></tr></thead><tbody id="pedidos-body"></tbody></table></div><p id="sin-pedidos" hidden>Todavía no hay pedidos. Creá el primero desde Cargas.</p></section>
+</main><aside><h2>Operaciones</h2><a href="cargas.html" class="btn-primary">Nuevo pedido</a><a href="gestion.html" class="btn-primary">Gestionar inventario</a><p>Los pedidos pendientes incluyen borradores y confirmados. Los vehículos asignados tienen un pedido confirmado o despachado.</p></aside></div>
+<footer>Grupo 5 · Programación III · 2026</footer>
+</div></body></html>

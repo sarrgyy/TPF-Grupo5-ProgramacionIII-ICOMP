@@ -1,113 +1,38 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Seguimiento Logístico</title>
-    <link rel="stylesheet" href="styles.css">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pedidos y despacho · Gestión Logística</title><link rel="stylesheet" href="styles.css">
+<script src="api.js" defer></script><script src="carga.js" defer></script>
 </head>
-<body>
-    <div id="container">
-        <header>
-            <h1>Sistema de Seguimiento de Logística y Distribución</h1>
-        </header>
-
-        <nav>
-            <ul>
-                <li><a href="index.html">Inicio</a></li>
-                <li><a href="gestion.html">Gestion</a></li>
-                <li><a href="cargas.html" class="activo">Cargar</a></li>
-                <li><a href="seguimiento.html">Seguimiento</a></li>
-            </ul>
-        </nav>
-
-        <div class="main-wrapper">
-            <section id="content">
-                <div class="card">
-                    <h2>Cargar Producto</h2>
-                    <form id="carga-form">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="origen">Origen</label>
-                                <select name="origen" id="origen">
-                                    <option value="centro">Depósito Centro</option>
-                                    <option value="melipal">Depósito Melipal</option>
-                                    <option value="dina-huapi">Depósito Dina Huapi</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="destino">Destino</label>
-                                <input type="text" id="destino" placeholder="Ej. Invap / Garibaldi 170">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">X
-                                <div class="form-group">
-                                    <label for="vehiculo">Vehículo Asignado</label>
-                                    <select name="vehiculo" id="vehiculo">
-                                        <option value="kangoo">Kangoo</option>
-                                        <option value="amarok">Amarok</option>
-                                        <option value="camion">Camión</option>
-                                        <option value="moto">Moto</option>
-                                    </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="chofer">Chofer</label>
-                                    <input type="text" id="chofer" placeholder="Nombre del conductor">
-                                </div>
-                        </div>
-                        <button type="submit" class="btn-primary">Guardar Registro</button>
-                    </form>
-                </div>
-                <div class="card">
-                    <label for="productos">Productos</label>
-                    <select>
-                        <option value="pantalon">Pantalon</option>
-                        <option value="campera">Campera</option>
-                        <option value="remera">Remera</option>
-                        <option value="buzo">Buzo</option>
-                    </select>
-                    <div class="add-product-row">
-                        <input type="number">
-                        <button type="button" class="btn-secondary">Agregar</button>
-                    </div>
-                
-                    <table>                        
-                        <thead>
-                            <tr>
-                                <th>Productos</th>
-                                <th>Cantidad</th>
-                                <th>Peso</th>
-                                <th>SubTotal</th>
-                                <th>Quitar</th>
-                            </tr>
-                        </thead>
-                        <tbody id="productos-body">
-                            <tr>
-                                <td>Caja Estándar A</td>
-                                <td>2</td>
-                                <td>45Kg</td>
-                                <td>$1000</td>
-                                <td><button type="button" class="btn-delete">X</button></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            <aside>
-                <h2>Resumen de Carga</h2>
-                <p class="peso-total">450 kg / 1000 kg</p>
-                    <div class="progress-bar">
-                        <div class="progress-fill"></div>
-                    </div>
-                   <button type="submit" form="carga-form" class="btn-primary">Confirmar y Despachar</button>
-            </aside>
-        </div>
-
-        <footer>
-            Grupo 5 Web &copy; 2026
-        </footer>
-    </div>
-</body>
-</html>
+<body><div id="container">
+<header><h1>Sistema de Gestión Logística y Distribución</h1></header>
+<nav aria-label="Navegación principal"><ul><li><a href="index.html">Inicio</a></li><li><a href="gestion.html">Gestión</a></li><li><a href="cargas.html" class="activo" aria-current="page">Cargas</a></li><li><a href="seguimiento.html">Seguimiento</a></li></ul></nav>
+<div id="mensaje" class="message" role="status" aria-live="polite" hidden></div>
+<div class="main-wrapper"><main id="content">
+<section class="card pedido-flujo" aria-labelledby="nuevo-pedido-titulo"><h2 id="nuevo-pedido-titulo">Nuevo pedido</h2>
+<ol id="pasos-pedido" class="pedido-pasos" aria-label="Progreso del pedido"><li aria-current="step">1. Datos</li><li>2. Productos</li><li>3. Confirmación</li></ol>
+<div id="crear-seccion"><h3>1. Datos del pedido</h3><p>Completá los datos y continuá acá mismo con los productos. El avance se guarda como borrador.</p><form id="pedido-form">
+<div class="form-row"><div class="form-group"><label for="id-pedido">ID del pedido</label><input id="id-pedido" required maxlength="64" pattern="[A-Za-z0-9_\-]+" title="Letras, números, guion o guion bajo"></div><div class="form-group"><label for="cliente">Cliente</label><input id="cliente" required maxlength="200"></div></div>
+<div class="form-group"><label for="destino">Destino</label><input id="destino" required maxlength="200"></div>
+<div class="form-group"><label for="prioridad">Prioridad</label><select id="prioridad"><option value="1">1 · Normal</option><option value="2">2 · Urgente</option><option value="3">3 · Crítica</option></select></div>
+<div class="form-row"><div class="form-group"><label for="hora-inicio">Hora de inicio (opcional)</label><input id="hora-inicio" type="time"></div><div class="form-group"><label for="hora-fin">Hora de fin (opcional)</label><input id="hora-fin" type="time"></div></div>
+<div class="form-group"><label for="observaciones">Observaciones</label><textarea id="observaciones" maxlength="2000" rows="3"></textarea></div>
+<button type="submit" class="btn-primary">Guardar datos y continuar</button></form></div>
+<section id="pedido-detalle" hidden>
+<div class="card"><h3>1. Datos guardados</h3><p><strong id="pedido-titulo">Pedido</strong></p><p>Estado: <strong id="pedido-estado"></strong></p><p id="pedido-info"></p><p>Vehículo: <strong id="vehiculo-actual"></strong></p><p>Volumen total: <strong id="volumen-total"></strong> m³</p>
+<div class="actions"><a id="ver-seguimiento" class="btn-secondary" href="seguimiento.html">Ver seguimiento</a><a href="cargas.html">Crear otro pedido</a></div></div>
+<div class="card"><h3 id="productos-titulo" tabindex="-1">2. Productos</h3><form id="item-form"><fieldset id="item-campos">
+<div class="form-group"><label for="producto-pedido">Producto del pedido</label><select id="producto-pedido" required></select></div><div class="form-group"><label for="deposito-pedido">Depósito de origen</label><select id="deposito-pedido" required></select></div>
+<div class="form-group"><label for="cantidad-pedido">Cantidad total</label><input id="cantidad-pedido" type="number" min="1" max="9007199254740991" step="1" required></div><p>Guardar reemplaza la cantidad anterior de ese producto y depósito.</p>
+<button type="submit" class="btn-secondary">Guardar cantidad</button></fieldset></form>
+<div class="table-scroll"><table><thead><tr><th>Producto</th><th>Depósito</th><th>Cantidad</th><th>Volumen (m³)</th></tr></thead><tbody id="items-body"></tbody></table></div><p id="sin-items">Todavía no agregaste productos al pedido.</p></div>
+<div class="card"><h3>3. Confirmación y despacho</h3>
+<form id="confirmar-form"><p>Revisá los productos antes de confirmar y reservar el stock.</p><p id="ayuda-confirmar">Agregá al menos un producto para poder confirmar.</p><button type="submit" class="btn-primary" aria-describedby="ayuda-confirmar">Confirmar pedido</button></form>
+<form id="vehiculo-form"><div class="form-group"><label for="vehiculo">Vehículo disponible</label><select id="vehiculo" required></select></div><button type="submit" class="btn-secondary">Asignar vehículo</button></form>
+<form id="despachar-form"><button type="submit" class="btn-primary">Despachar pedido</button></form>
+<form id="cancelar-form"><button type="submit" class="btn-delete">Cancelar pedido</button></form></div></section></section>
+<details class="card retomar-pedido" id="retomar-seccion"><summary>Retomar un pedido existente</summary><form id="recuperar-form" class="tracking-search"><div class="form-group"><label for="recuperar-id">Código para recuperar</label><input id="recuperar-id" required maxlength="64"></div><button type="submit" class="btn-secondary">Abrir pedido</button></form></details>
+</main><aside><h2>Orden de trabajo</h2><ol class="instructions"><li>Completá los datos en Nuevo pedido.</li><li>Continuá con los productos, depósitos y cantidades en el mismo bloque.</li><li>Confirmá para reservar stock.</li><li>Asigná un vehículo con conductor y capacidad suficiente.</li><li>Despachá y registrá la entrega desde Seguimiento.</li></ol><p>Tu borrador queda guardado. La búsqueda es solo para retomar pedidos existentes.</p><p>La capacidad se controla por volumen. El peso es informativo.</p></aside></div>
+<footer>Grupo 5 · Programación III · 2026</footer>
+</div></body></html>

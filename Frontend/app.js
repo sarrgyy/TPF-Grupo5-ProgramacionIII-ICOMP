@@ -1,37 +1,35 @@
-const productos = [
-    { id: 1, nombre: "Caja estándar", stock: 45 },
-    { id: 2, nombre: "Pallet electrónico", stock: 10 },
-    { id: 3, nombre: "Caja reforzada", stock: 28 }
-];
+/** @file Muestra indicadores y pedidos reales en la página de Inicio. */
+"use strict";
 
-function mostrarProductos(productos){
-    const tabla = document.getElementById("productos-body");
-    tabla.innerHTML = "";
-    for(const producto of productos){
-        const fila = document.createElement("tr");
-        let disponibilidad;
-        if(producto.stock > 0){
-            disponibilidad = "Disponible";
-        } else {
-            disponibilidad = "Sin Stock";
-        }
-        fila.innerHTML= `
-            <td>${producto.id}</td>
-            <td>${producto.nombre}</td>
-            <td>${producto.stock}</td>
-            <td>${disponibilidad}
-        `;
-        tabla.appendChild(fila);
+/**
+ * Recupera indicadores y pedidos ordenados por la API para renderizar Inicio.
+ * @returns {Promise<void>} Finaliza al actualizar las tarjetas y la tabla.
+ */
+async function cargarInicio() {
+    const [kpis, pedidos] = await Promise.all([apiFetch("/reportes/kpis"), apiFetch("/pedidos")]);
+    for (const [id, clave] of [["pendientes", "pedidos_pendientes"], ["asignados", "vehiculos_asignados"],
+        ["stock", "productos_con_stock"], ["entregados", "pedidos_entregados"]]) {
+        document.getElementById(`kpi-${id}`).textContent = kpis[clave];
     }
+    const tabla = document.getElementById("pedidos-body");
+    tabla.replaceChildren();
+    pedidos.forEach(pedido => {
+        const fila = document.createElement("tr");
+        const codigo = document.createElement("td");
+        const link = document.createElement("a");
+        link.textContent = pedido.id_pedido;
+        link.href = `seguimiento.html?pedido=${encodeURIComponent(pedido.id_pedido)}`;
+        codigo.appendChild(link);
+        fila.appendChild(codigo);
+        addCells(fila, [pedido.cliente, pedido.destino, pedido.prioridad]);
+        const estado = document.createElement("td");
+        const badge = document.createElement("span");
+        badge.textContent = pedido.estado;
+        badge.className = `badge estado-${pedido.estado.toLowerCase()}`;
+        estado.appendChild(badge);
+        fila.appendChild(estado);
+        tabla.appendChild(fila);
+    });
+    document.getElementById("sin-pedidos").hidden = pedidos.length > 0;
 }
-
-mostrarProductos(productos);
-
-function buscarProductos(productos, busqueda){
-    const filtrado = productos.filter(
-        producto => productos.nombre === busqueda
-    );
-    const contiene = filtrado.includes(
-        
-    )
-}
+cargarInicio().catch(error => showMessage(error.message, "error"));
