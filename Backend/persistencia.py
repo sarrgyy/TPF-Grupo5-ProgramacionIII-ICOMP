@@ -12,6 +12,7 @@ from pathlib import Path
 
 from .modelos.deposito import Deposito
 from .modelos.productos import Producto
+from .modelos.validaciones import validar_medida
 
 
 class InventarioSQLite:
@@ -40,12 +41,18 @@ class InventarioSQLite:
         self.conexion = sqlite3.connect(ruta)
         self.conexion.row_factory = sqlite3.Row
         try:
-            self.conexion.executescript(
-                Path(__file__).with_name("schema.sql").read_text(encoding="utf-8")
-            )
-            # Bases anteriores conservan sus tablas y reciben solo la nueva columna.
+            esquema = Path(__file__).with_name("schema.sql").read_text(encoding="utf-8")
+            estructura, self._datos_base_sql = esquema.split("-- DATOS BASE", 1)
+            self.conexion.executescript(estructura)
+            # Migración aditiva: preservar pedidos y notas de versiones anteriores.
             with self._transaccion():
                 columnas = {fila["name"] for fila in self.conexion.execute("PRAGMA table_info(pedidos)")}
+                if "obvservaciones" in columnas and "observaciones" not in columnas:
+                    self.conexion.execute("ALTER TABLE pedidos RENAME COLUMN obvservaciones TO observaciones")
+                    columnas.add("observaciones")
+                for columna in ("hora_inicio", "hora_fin", "observaciones"):
+                    if columna not in columnas:
+                        self.conexion.execute(f"ALTER TABLE pedidos ADD COLUMN {columna} TEXT")
                 if "patente_vehiculo" not in columnas:
                     self.conexion.execute(
                         "ALTER TABLE pedidos ADD COLUMN patente_vehiculo TEXT REFERENCES vehiculos(patente)"
@@ -58,6 +65,30 @@ class InventarioSQLite:
         except Exception:
             self.close()
             raise
+
+    def cargar_datos_base(self):
+        """Inicializa una base vacía una sola vez con los valores de schema.sql.
+
+        Respeta bases con datos propios y no repone registros eliminados ni stock
+        consumido. La marca y los valores iniciales se guardan en una transacción.
+
+        Returns:
+            bool: True si insertó valores base; False si solo marcó o conservó una inicialización.
+
+        Raises:
+            ValueError: Ya hay una transacción activa y se evita confirmarla implícitamente.
+            sqlite3.Error: Falló la carga; sus escrituras se revierten para permitir reintento.
+        """
+        if self.conexion.in_transaction:
+            raise ValueError("La carga inicial debe ejecutarse fuera de una transacción.")
+        cambios = self.conexion.total_changes
+        try:
+            self.conexion.executescript(self._datos_base_sql)
+        except sqlite3.Error:
+            self.conexion.rollback()
+            raise
+        # Sin datos nuevos, la única escritura posible es la marca de inicialización.
+        return self.conexion.total_changes - cambios > 1
 
     def __enter__(self):
         """Devuelve la misma sesión para utilizarla en un bloque with.
@@ -107,9 +138,7 @@ class InventarioSQLite:
         Raises:
             ValueError: La medida no es un número positivo y finito.
         """
-        if (isinstance(valor, bool) or not isinstance(valor, (int, float))
-                or not math.isfinite(valor) or valor <= 0):
-            raise ValueError("Las medidas deben ser números positivos y finitos.")
+        validar_medida(valor)
 
     @staticmethod
     def _validar_cantidad(cantidad):
@@ -139,7 +168,7 @@ class InventarioSQLite:
         self.conexion.execute(
             "INSERT INTO productos VALUES (?, ?, ?, ?)",
             (producto.id_producto, producto.nombre,
-             producto.volumen_unitario, producto.peso_unitario),
+             float(producto.volumen_unitario), float(producto.peso_unitario)),
         )
 
     def registrar_producto(self, producto):
@@ -169,7 +198,7 @@ class InventarioSQLite:
         self.conexion.execute(
             "INSERT INTO depositos VALUES (?, ?, ?, ?)",
             (deposito.id_deposito, deposito.nombre,
-             deposito.ubicacion, deposito.capacidad_maxima),
+             deposito.ubicacion, float(deposito.capacidad_maxima)),
         )
 
     def registrar_deposito(self, deposito):
@@ -371,23 +400,43 @@ class InventarioSQLite:
         )
         return nuevo_stock
 
-    def actualizar_stock(self, id_deposito, id_producto, cantidad):
+    def actualizar_stock(self, id_deposito, id_producto, cantidad, clave=None):
         """Guarda un ingreso positivo o retiro negativo en una transacción.
+
+        Una clave repetida con los mismos datos no vuelve a sumar unidades.
+        La respuesta refleja el stock actual, que puede haber cambiado por
+        otras operaciones desde la primera llamada con esa clave.
 
         Args:
             id_deposito (str): Identificador del depósito.
             id_producto (str): Identificador del producto.
             cantidad (int): Variación firmada; positiva ingresa y negativa retira.
+            clave (str | None): Identificador opcional para reintentar un ingreso
+                sin duplicarlo, incluso después de reiniciar.
 
         Returns:
-            int: Stock físico resultante.
+            int: Stock físico actual tras el movimiento o un reintento reconocido.
 
         Raises:
             ValueError: Referencias, cantidad, reservas o capacidad impiden el
                 movimiento.
+            sqlite3.IntegrityError: La clave de ingreso se usó con otros datos
+                o una restricción SQLite impide guardar la operación.
         """
         with self._transaccion():
-            return self._modificar_stock(id_deposito, id_producto, cantidad)
+            if clave is not None:
+                self._validar_cantidad(cantidad)
+                if not isinstance(clave, str) or not clave.strip() or len(clave) > 100 or cantidad <= 0:
+                    raise ValueError("La clave de ingreso requiere un identificador y una cantidad positiva.")
+                previo = self.conexion.execute("SELECT * FROM ingresos_stock WHERE clave=?", (clave,)).fetchone()
+                if previo is not None:
+                    if (previo["id_deposito"], previo["id_producto"], previo["cantidad"]) != (id_deposito, id_producto, cantidad):
+                        raise sqlite3.IntegrityError("La clave de ingreso ya se usó con otros datos.")
+                    return self.stock(id_deposito, id_producto)
+            resultado = self._modificar_stock(id_deposito, id_producto, cantidad)
+            if clave is not None:
+                self.conexion.execute("INSERT INTO ingresos_stock VALUES (?, ?, ?, ?)", (clave, id_deposito, id_producto, cantidad))
+            return resultado
 
     def transferir(self, origen, destino, id_producto, cantidad):
         """Traslada unidades y revierte el origen si falla la entrada en destino.

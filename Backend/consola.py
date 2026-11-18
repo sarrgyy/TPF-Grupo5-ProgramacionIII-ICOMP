@@ -146,6 +146,20 @@ class MenuConsola:
             raise ValueError("El dato no puede estar vacío.")
         return valor
 
+    def _opcional(self, mensaje):
+        """Lee un texto opcional; una respuesta vacía significa sin dato.
+
+        Args:
+            mensaje (str): Texto de la solicitud de entrada.
+
+        Returns:
+            str | None: Respuesta sin espacios extremos, o None si quedó vacía.
+
+        Raises:
+            _CargaCancelada: Se canceló el formulario.
+        """
+        return self._entrada(mensaje + " (vacío = ninguno)") or None
+
     def _entero(self, mensaje, maximo=2**63 - 1, defecto=None):
         """Lee un entero positivo dentro del límite solicitado.
 
@@ -287,11 +301,18 @@ class MenuConsola:
     def _cabecera_pedido(self, funcion):
         """Recoge todos los campos antes de crear o editar un borrador.
 
+        Pide también la ventana horaria y las observaciones. Al editar, los
+        datos opcionales que se dejen vacíos reemplazan a los anteriores.
+
         Args:
             funcion (Callable): Operación que recibe los datos recogidos.
         """
         self._guardar(funcion, self._texto("ID del pedido"), self._texto("Cliente"),
-                      self._texto("Destino"), self._entero("Prioridad 1 a 3 [1]", maximo=3, defecto=1))
+                      self._texto("Destino"),
+                      self._entero("Prioridad 1 a 3 [1]", maximo=3, defecto=1),
+                      self._opcional("Hora de inicio de entrega HH:MM"),
+                      self._opcional("Hora de fin de entrega HH:MM"),
+                      self._opcional("Observaciones"))
 
     def _detalle_pedido(self):
         """Muestra destino, prioridad y cantidades del pedido por depósito."""
@@ -299,6 +320,10 @@ class MenuConsola:
         print(f"{pedido.id_pedido} — {pedido.cliente}: {pedido.estado}")
         print(f"Destino: {pedido.destino}; prioridad: {pedido.prioridad}; "
               f"vehículo: {pedido.vehiculo_asignado or 'sin asignar'}")
+        if pedido.hora_inicio:
+            print(f"Ventana de entrega: {pedido.hora_inicio} - {pedido.hora_fin}")
+        if pedido.observaciones:
+            print(f"Observaciones: {pedido.observaciones}")
         if not pedido.productos:
             print("Sin productos.")
         for item in pedido.productos:

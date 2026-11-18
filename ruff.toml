@@ -1,0 +1,11 @@
+target-version = "py312"
+
+[lint]
+select = ["D"]
+
+[lint.pydocstyle]
+convention = "google"
+
+[lint.per-file-ignores]
+# Los tests describen el caso; sus fixtures inyectadas no repiten una sección Args.
+"tests/**/*.py" = ["D417"]

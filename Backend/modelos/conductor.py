@@ -1,15 +1,24 @@
+"""Representa conductores y sus vínculos locales con vehículos."""
 
 class Conductor:
-    """
-    Representa un conductor de distribución.
+    """Conserva identidad, estado y patente asignada de un conductor.
+
+    Los métodos cambian el objeto local. FlotaSQLite persiste la relación
+    mediante el vehículo y deriva el estado Asignado al consultarlo.
+
+    Attributes:
+        dni (str): Identificador del conductor.
+        nombre (str): Nombre visible.
+        estado (str): Disponible, Asignado o Inactivo.
+        vehiculo_asignado (str | None): Patente local o consultada.
     """
     
     def __init__(self, dni, nombre):
-        """
-        Inicializa un nuevo conductor.
-        
-        :param dni: Documento Nacional de Identidad (Identificador único).
-        :param nombre: Nombre completo del conductor.
+        """Crea un conductor Disponible y sin vehículo asignado.
+
+        Args:
+            dni (str): Identificador del conductor.
+            nombre (str): Nombre visible.
         """
         self.dni = dni
         self.nombre = nombre
@@ -19,8 +28,13 @@ class Conductor:
         self.vehiculo_asignado = None
 
     def actualizar_estado(self, nuevo_estado):
-        """
-        Modifica el estado operativo del conductor garantizando que sea un estado válido.
+        """Actualiza el estado local si su nombre está admitido.
+
+        Args:
+            nuevo_estado (str): Disponible, Asignado o Inactivo.
+
+        Returns:
+            bool: True si se actualizó; False si se rechazó el nombre.
         """
         estados_validos = ["Disponible", "Asignado", "Inactivo"]
         if nuevo_estado in estados_validos:
@@ -32,8 +46,16 @@ class Conductor:
             return False
 
     def asignar_vehiculo(self, patente):
-        """
-        Vincula al conductor con un vehículo si se encuentra apto para trabajar.
+        """Vincula una patente al modelo si está Disponible o Asignado.
+
+        En memoria reemplaza la patente anterior. La asignación persistente
+        requiere las verificaciones y operaciones de FlotaSQLite.
+
+        Args:
+            patente (str): Patente que se guarda en el objeto local.
+
+        Returns:
+            bool: True si se vinculó; False si el conductor está Inactivo.
         """
         if self.estado in ["Disponible", "Asignado"]:
             self.vehiculo_asignado = patente
@@ -45,8 +67,10 @@ class Conductor:
             return False
 
     def liberar_vehiculo(self):
-        """
-        Desvincula al conductor de su vehículo actual, retornándolo a disponibilidad.
+        """Libera la patente local y deja al conductor Disponible.
+
+        Returns:
+            bool: True si había vehículo; False si no había asignación.
         """
         if self.vehiculo_asignado:
             print(f"Conductor {self.nombre} liberado del vehículo {self.vehiculo_asignado}.")
@@ -56,8 +80,10 @@ class Conductor:
         return False
 
     def obtener_info(self):
-        """
-        Retorna una vista resumida del estado actual del conductor.
+        """Construye un resumen de identidad, estado y asignación local.
+
+        Returns:
+            dict[str, object]: DNI, Nombre, Estado y Vehículo Asignado.
         """
         return {
             "DNI": self.dni,

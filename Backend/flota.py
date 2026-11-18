@@ -64,7 +64,7 @@ class FlotaSQLite:
         with self.inventario._transaccion():
             self.conexion.execute(
                 "INSERT INTO vehiculos (patente, capacidad_maxima, estado) VALUES (?, ?, ?)",
-                (vehiculo.patente, vehiculo.capacidad_maxima, vehiculo.estado),
+                (vehiculo.patente, float(vehiculo.capacidad_maxima), vehiculo.estado),
             )
 
     def registrar_conductor(self, conductor):

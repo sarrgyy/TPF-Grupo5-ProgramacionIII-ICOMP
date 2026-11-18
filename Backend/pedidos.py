@@ -6,6 +6,7 @@ sin perder el borrador. Las escrituras comparten la sesión de inventario.
 """
 
 import math
+import re
 
 from .modelos.pedido import Pedido
 from .flota import FlotaSQLite
@@ -76,6 +77,28 @@ class PedidosSQLite:
         if type(prioridad) is not int or prioridad not in (1, 2, 3):
             raise ValueError("La prioridad debe ser 1, 2 o 3.")
 
+    @staticmethod
+    def _validar_ventana(hora_inicio, hora_fin):
+        """Valida la ventana horaria de entrega: ambas horas o ninguna.
+
+        Args:
+            hora_inicio (str | None): Inicio de la ventana, formato HH:MM.
+            hora_fin (str | None): Fin de la ventana, formato HH:MM.
+
+        Raises:
+            ValueError: Falta una de las dos horas, el formato no es HH:MM o
+                el inicio no es anterior al fin.
+        """
+        if hora_inicio is None and hora_fin is None:
+            return
+        if hora_inicio is None or hora_fin is None:
+            raise ValueError("Indicá la hora de inicio y la de fin, o ninguna de las dos.")
+        for hora in (hora_inicio, hora_fin):
+            if not isinstance(hora, str) or not re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", hora):
+                raise ValueError("Las horas deben tener formato HH:MM (por ejemplo 08:30).")
+        if hora_inicio >= hora_fin:
+            raise ValueError("La hora de inicio debe ser anterior a la hora de fin.")
+
     def _cabecera(self, id_pedido):
         """Consulta los campos generales del pedido sin cargar ítems.
 
@@ -127,28 +150,62 @@ class PedidosSQLite:
             (id_pedido,),
         ).fetchall()
 
-def crear_borrador(self, id_pedido, cliente, destino, prioridad=1, hora_inicio=None, hora_fin=None):
-        """Guarda un pedido nuevo sin productos ni reservas, incluyendo ventana de entrega."""
+    def crear_borrador(self, id_pedido, cliente, destino, prioridad=1,
+                       hora_inicio=None, hora_fin=None, observaciones=None):
+        """Guarda un pedido nuevo sin productos ni reservas.
+
+        Args:
+            id_pedido (str): Identificador del pedido.
+            cliente (str): Nombre del cliente.
+            destino (str): Dirección de entrega.
+            prioridad (int): 1 normal, 2 urgente o 3 crítico. Por defecto: 1.
+            hora_inicio (str | None): Inicio de la ventana de entrega, HH:MM.
+            hora_fin (str | None): Fin de la ventana de entrega, HH:MM.
+            observaciones (str | None): Notas libres del pedido.
+
+        Raises:
+            ValueError: Cabecera, prioridad o ventana horaria inválidas.
+            sqlite3.IntegrityError: Identificador repetido.
+        """
         self._validar_cabecera(id_pedido, cliente, destino, prioridad)
+        self._validar_ventana(hora_inicio, hora_fin)
         with self.inventario._transaccion():
             self.conexion.execute(
-                """INSERT INTO pedidos (id_pedido, cliente, destino, prioridad, hora_inicio, hora_fin) 
-                VALUES (?, ?, ?, ?, ?, ?)""",
-                (id_pedido, cliente, destino, prioridad, hora_inicio, hora_fin),
+                """INSERT INTO pedidos (id_pedido, cliente, destino, prioridad,
+                hora_inicio, hora_fin, observaciones) VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                (id_pedido, cliente, destino, prioridad, hora_inicio, hora_fin, observaciones),
             )
 
-def editar_borrador(self, id_pedido, cliente, destino, prioridad=1, hora_inicio=None, hora_fin=None, observaciones=None):
-        """Reemplaza la cabecera de un pedido que todavía es Borrador."""
+    def editar_borrador(self, id_pedido, cliente, destino, prioridad=1,
+                        hora_inicio=None, hora_fin=None, observaciones=None):
+        """Reemplaza toda la cabecera de un pedido que todavía es Borrador.
+
+        Los datos que no se envíen quedan vacíos: es un reemplazo completo,
+        no una modificación parcial. Los productos no se modifican.
+
+        Args:
+            id_pedido (str): Identificador del pedido.
+            cliente (str): Nombre del cliente.
+            destino (str): Dirección de entrega.
+            prioridad (int): 1 normal, 2 urgente o 3 crítico. Por defecto: 1.
+            hora_inicio (str | None): Inicio de la ventana de entrega, HH:MM.
+            hora_fin (str | None): Fin de la ventana de entrega, HH:MM.
+            observaciones (str | None): Notas libres del pedido.
+
+        Raises:
+            ValueError: Pedido inexistente o no editable, o datos inválidos.
+        """
         self._validar_cabecera(id_pedido, cliente, destino, prioridad)
+        self._validar_ventana(hora_inicio, hora_fin)
         with self.inventario._transaccion():
             self._exigir_estado(id_pedido, "Borrador")
             self.conexion.execute(
-                """UPDATE pedidos SET cliente = ?, destino = ?, prioridad = ?, 
+                """UPDATE pedidos SET cliente = ?, destino = ?, prioridad = ?,
                 hora_inicio = ?, hora_fin = ?, observaciones = ? WHERE id_pedido = ?""",
                 (cliente, destino, prioridad, hora_inicio, hora_fin, observaciones, id_pedido),
             )
 
-def establecer_producto(self, id_pedido, id_deposito, id_producto, cantidad):
+    def establecer_producto(self, id_pedido, id_deposito, id_producto, cantidad):
         """Fija el total de una pareja depósito/producto del borrador.
 
         La cantidad reemplaza el total previo de esa pareja; no lo incrementa.
@@ -176,8 +233,11 @@ def establecer_producto(self, id_pedido, id_deposito, id_producto, cantidad):
                 DO UPDATE SET cantidad = excluded.cantidad""",
                 (id_pedido, id_deposito, id_producto, cantidad),
             )
+            volumen = sum(item["cantidad"] * item["volumen_unitario"] for item in self._items(id_pedido))
+            if not math.isfinite(volumen):
+                raise ValueError("El volumen total del pedido excede el rango permitido.")
 
-def quitar_producto(self, id_pedido, id_deposito, id_producto):
+    def quitar_producto(self, id_pedido, id_deposito, id_producto):
         """Elimina una asignación depósito/producto de un borrador.
 
         Args:
@@ -197,32 +257,50 @@ def quitar_producto(self, id_pedido, id_deposito, id_producto):
             if cursor.rowcount == 0:
                 raise ValueError("El pedido no tiene ese producto de ese depósito.")
 
-def obtener_pedido(self, id_pedido):
-        """Reconstruye una copia del pedido integrando su objeto Entrega por composición."""
+    def obtener_pedido(self, id_pedido):
+        """Reconstruye una copia del pedido con su entrega y datos de cabecera.
+
+        Conserva horario y observaciones aunque entrega sea None. Con ventana
+        y estado operativo, deriva Confirmado → Programada, Despachado → En Camino
+        y Entregado → Completada. Borrador y Cancelado no tienen objeto Entrega.
+
+        Args:
+            id_pedido (str): Identificador del pedido persistido.
+
+        Returns:
+            Pedido: Copia con ítems por depósito, volumen en m³ y metadatos de asignación.
+
+        Raises:
+            ValueError: El pedido no existe.
+        """
         fila = self._cabecera(id_pedido)
         pedido = Pedido(fila["id_pedido"], fila["cliente"], fila["destino"], fila["prioridad"])
         pedido.estado = fila["estado"]
         pedido.creado_en = fila["creado_en"]
         pedido.vehiculo_asignado = fila["patente_vehiculo"]
-        
+        pedido.hora_inicio = fila["hora_inicio"]
+        pedido.hora_fin = fila["hora_fin"]
+        pedido.observaciones = fila["observaciones"]
+
         # --- NUEVO: Composición de la Entrega (Pedido ◆──── Entrega) ---
         # Solo se instancia si hay datos de horario registrados
-        if fila["hora_inicio"] and fila["hora_fin"]:
+        estados_entrega = {"Confirmado": "Programada", "Despachado": "En Camino", "Entregado": "Completada"}
+        if fila["hora_inicio"] and fila["hora_fin"] and pedido.estado in estados_entrega:
             from .modelos.entrega import Entrega
             # Usamos el id_pedido como id_entrega ya que es una relación 1 a 1
             entrega = Entrega(fila["id_pedido"], fila["cliente"], fila["destino"], fila["hora_inicio"], fila["hora_fin"])
-            entrega.estado = fila["estado"]
+            entrega.estado = estados_entrega[pedido.estado]
             entrega.observaciones = fila["observaciones"] or ""
             pedido.entrega = entrega
         else:
             pedido.entrega = None
         # ---------------------------------------------------------------
-        
+
         pedido.productos = [dict(item) for item in self._items(id_pedido)]
         pedido.volumen_total = sum(i["cantidad"] * i["volumen_unitario"] for i in pedido.productos)
         return pedido
 
-def listar_pedidos(self):
+    def listar_pedidos(self):
         """Lista copias completas de pedidos ordenadas por identificador.
 
         Returns:
@@ -231,7 +309,7 @@ def listar_pedidos(self):
         filas = self.conexion.execute("SELECT id_pedido FROM pedidos ORDER BY id_pedido").fetchall()
         return [self.obtener_pedido(fila[0]) for fila in filas]
 
-def confirmar(self, id_pedido):
+    def confirmar(self, id_pedido):
         """Reserva todas las cantidades o conserva el borrador sin reservar nada.
 
         No descuenta stock físico. Un faltante conserva el borrador editable sin
@@ -262,7 +340,7 @@ def confirmar(self, id_pedido):
                 raise StockInsuficiente(faltantes)
             self._cambiar_estado(id_pedido, "Confirmado")
 
-def _cambiar_estado(self, id_pedido, estado):
+    def _cambiar_estado(self, id_pedido, estado):
         """Escribe el estado dentro de una transición ya validada.
 
         El llamador valida el estado de origen y mantiene una transacción
@@ -274,7 +352,7 @@ def _cambiar_estado(self, id_pedido, estado):
         """
         self.conexion.execute("UPDATE pedidos SET estado = ? WHERE id_pedido = ?", (estado, id_pedido))
 
-def _validar_vehiculo(self, pedido, patente):
+    def _validar_vehiculo(self, pedido, patente):
         """Verifica disponibilidad, conductor y capacidad del pedido completo.
 
         Args:
@@ -300,7 +378,7 @@ def _validar_vehiculo(self, pedido, patente):
                     and not math.isclose(volumen, vehiculo.capacidad_maxima, rel_tol=1e-12, abs_tol=0))):
             raise ValueError("El vehículo no tiene capacidad para todo el pedido.")
 
-def asignar_vehiculo(self, id_pedido, patente):
+    def asignar_vehiculo(self, id_pedido, patente):
         """Ocupa un vehículo válido para un único pedido Confirmado.
 
         No despacha ni descuenta stock. Para cambiar de vehículo hay que
@@ -323,7 +401,7 @@ def asignar_vehiculo(self, id_pedido, patente):
             self.conexion.execute("UPDATE pedidos SET patente_vehiculo = ? WHERE id_pedido = ?",
                                   (patente, id_pedido))
 
-def liberar_vehiculo(self, id_pedido):
+    def liberar_vehiculo(self, id_pedido):
         """Quita el vehículo del Confirmado sin liberar su mercadería.
 
         Args:
@@ -339,7 +417,7 @@ def liberar_vehiculo(self, id_pedido):
             self.conexion.execute("UPDATE pedidos SET patente_vehiculo = NULL WHERE id_pedido = ?",
                                   (id_pedido,))
 
-def cancelar(self, id_pedido):
+    def cancelar(self, id_pedido):
         """Cancela antes del despacho y libera reservas y ocupación del vehículo.
 
         Conserva ítems y patente histórica; no descuenta mercadería.
@@ -354,7 +432,7 @@ def cancelar(self, id_pedido):
             self._exigir_estado(id_pedido, "Borrador", "Confirmado")
             self._cambiar_estado(id_pedido, "Cancelado")
 
-def despachar(self, id_pedido):
+    def despachar(self, id_pedido):
         """Guarda stock descontado, pedido Despachado y vehículo En Ruta juntos.
 
         Revalida la flota. Si falla una escritura, se revierten stock, reservas,
@@ -382,7 +460,7 @@ def despachar(self, id_pedido):
             self.conexion.execute("UPDATE vehiculos SET estado = 'En Ruta' WHERE patente = ?",
                                   (pedido.vehiculo_asignado,))
 
-def entregar(self, id_pedido):
+    def entregar(self, id_pedido):
         """Finaliza el pedido y deja su vehículo Disponible sin otro retiro.
 
         Conserva conductor y patente histórica. Los pedidos antiguos despachados

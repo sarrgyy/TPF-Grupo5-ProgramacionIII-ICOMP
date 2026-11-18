@@ -1,0 +1,14 @@
+[run]
+branch = True
+source = Backend
+relative_files = True
+parallel = True
+patch = subprocess
+data_file = test-results/.coverage
+
+[report]
+show_missing = True
+skip_empty = True
+
+[html]
+directory = test-results/coverage-html
