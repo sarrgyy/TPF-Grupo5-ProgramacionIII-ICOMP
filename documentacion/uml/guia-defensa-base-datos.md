@@ -1,5 +1,7 @@
 # Guía para defender el diseño de la base de datos
 
+[Índice de documentación](../README.md) · [Diagrama UML](diagrama-base-datos.md)
+
 ## Cómo empezar la explicación
 
 > El sistema utiliza una sola base de datos SQLite. Dentro de esa base hay nueve tablas que separan productos, depósitos, pedidos, flota y datos de control. Las tablas se relacionan mediante claves foráneas para representar cómo funciona la logística y evitar repetir información.
@@ -163,9 +165,9 @@ Las FK no declaran borrado en cascada. No debe afirmarse que borrar un producto 
 ## Fuentes del proyecto
 
 - [Diagrama y detalle del esquema](diagrama-base-datos.md).
-- [SQL: tablas y restricciones](../Backend/schema.sql).
-- [Persistencia: stock, ingresos e índice de vehículo activo](../Backend/persistencia.py).
-- [Pedidos: reservas y transacciones](../Backend/pedidos.py).
-- [Flota: asignación de conductores](../Backend/flota.py).
+- [SQL: tablas y restricciones](../../Backend/schema.sql).
+- [Persistencia: stock, ingresos e índice de vehículo activo](../../Backend/persistencia.py).
+- [Pedidos: reservas y transacciones](../../Backend/pedidos.py).
+- [Flota: asignación de conductores](../../Backend/flota.py).
 
 Esta guía explica el código existente. Los ejemplos son ilustrativos; no corresponden a cambios en la base de trabajo. No se ejecutaron pruebas funcionales para generar esta documentación.

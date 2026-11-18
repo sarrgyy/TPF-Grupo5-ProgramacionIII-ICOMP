@@ -1,5 +1,7 @@
 # Diagrama UML de la base de datos
 
+[Índice de documentación](../README.md) · [Guía para defender las relaciones](guia-defensa-base-datos.md)
+
 Fecha de revisión: 18/11/2026.
 
 El proyecto utiliza **una base SQLite**, cuyo archivo predeterminado es `Backend/logistica.db`. Inventario, pedidos y flota comparten sus tablas. La consola permite elegir otro archivo con `--db` y la API mediante `LOGISTICA_DB` o el argumento `ruta_db` de `create_app`.
@@ -136,11 +138,11 @@ classDiagram
 
 ## Fuentes
 
-- [Esquema SQL](../Backend/schema.sql): tablas, claves, restricciones y datos base.
-- [Persistencia](../Backend/persistencia.py): migraciones, índice de vehículo activo y cálculos de inventario.
-- [Pedidos](../Backend/pedidos.py): reservas, transiciones y reconstrucción de entregas.
-- [Flota](../Backend/flota.py): asignaciones y estados derivados.
-- [Inicio de consola](../Backend/main.py) y [API](../Backend/api.py): selección del archivo SQLite.
+- [Esquema SQL](../../Backend/schema.sql): tablas, claves, restricciones y datos base.
+- [Persistencia](../../Backend/persistencia.py): migraciones, índice de vehículo activo y cálculos de inventario.
+- [Pedidos](../../Backend/pedidos.py): reservas, transiciones y reconstrucción de entregas.
+- [Flota](../../Backend/flota.py): asignaciones y estados derivados.
+- [Inicio de consola](../../Backend/main.py) y [API](../../Backend/api.py): selección del archivo SQLite.
 
 ## Verificación
 
