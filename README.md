@@ -12,31 +12,114 @@ Los objetos de dominio devueltos por los repositorios son copias de consulta. Ca
 
 ## Instalación en Windows
 
-Requisitos: Python 3.12 (verificado con 3.12.3) y Git para clonar. Para descargar la rama de entrega, abrir PowerShell y ejecutar:
+Estos pasos permiten ejecutar la **interfaz web** en tu computadora. Hacelos en orden; esperá a que termine cada comando antes de pegar el siguiente. La instalación de dependencias se hace una sola vez por computadora.
+
+### 1. Instalar los requisitos
+
+- **Python 3.12**. El proyecto se verificó con Python 3.12.3. Si no lo tenés, podés descargar el [instalador de Python 3.12.10](https://www.python.org/downloads/release/python-31210/), eligiendo **Windows installer (64-bit)** para una PC Windows x64. En el instalador, marcá **Add python.exe to PATH** y conservá el lanzador `py`.
+- **Git**, si vas a clonar el repositorio. Se descarga desde [Git para Windows](https://git-scm.com/install/windows). También podés descargar el proyecto como ZIP, como se explica en el paso siguiente.
+- **Conexión a Internet** para descargar el proyecto y sus dependencias.
+
+Después de instalar Python y Git, cerrá y volvé a abrir PowerShell. Comprobá Python:
 
 ```powershell
-git clone --branch desarrollo_minimo --single-branch https://github.com/sarrgyy/TPF-Grupo5-ProgramacionIII-ICOMP.git
+py -3.12 --version
+```
+
+Debe mostrar `Python 3.12.x`. Si vas a usar Git, comprobá también:
+
+```powershell
+git --version
+```
+
+### 2. Descargar el proyecto desde main
+
+**Si todavía no tenés el proyecto:** abrí PowerShell en la carpeta donde quieras guardarlo y ejecutá:
+
+```powershell
+git clone --branch main --single-branch https://github.com/sarrgyy/TPF-Grupo5-ProgramacionIII-ICOMP.git
 Set-Location TPF-Grupo5-ProgramacionIII-ICOMP
 ```
 
-Si ya tenés el repositorio, abrí la terminal en su carpeta raíz. Crear el entorno e instalar las dependencias:
+El primer comando descarga el proyecto; el segundo entra en su carpeta.
+
+**Si ya lo habías clonado:** con tus cambios propios guardados, abrí PowerShell dentro del repositorio y actualizá `main`:
 
 ```powershell
-python -m venv .venv
+git switch main
+git pull --ff-only origin main
+```
+
+Si Git avisa que hay cambios locales pendientes, guardalos antes de actualizar; no hace falta borrar tu carpeta ni tu base de datos.
+
+**Alternativa sin Git:** abrí el [repositorio en GitHub](https://github.com/sarrgyy/TPF-Grupo5-ProgramacionIII-ICOMP), seleccioná la rama **main** y elegí **Code → Download ZIP**. Extraé el ZIP completo antes de continuar.
+
+### 3. Abrir PowerShell en la carpeta correcta
+
+Todos los comandos siguientes se ejecutan en la **raíz del proyecto**, donde están `README.md`, `requirements.txt`, `ejecutar.py` y las carpetas `Backend` y `Frontend`.
+
+Si usaste los comandos de clonado del paso 2, ya estás en esa carpeta. Si descargaste un ZIP o cerraste la terminal, abrí la carpeta del proyecto en el Explorador de archivos; en su barra de direcciones escribí `powershell` y presioná Enter.
+
+Para comprobar la ubicación:
+
+```powershell
+Test-Path .\requirements.txt
+```
+
+Debe responder `True`. Si responde `False`, entrá en la carpeta que contiene ese archivo antes de continuar.
+
+### 4. Crear el entorno e instalar las dependencias
+
+Ejecutá estas dos líneas, una por vez:
+
+```powershell
+py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-No es necesario activar el entorno ni cambiar la política de ejecución de PowerShell. En Linux/macOS el ejecutable equivalente es `.venv/bin/python`.
+La primera crea `.venv`, una carpeta con el entorno Python del proyecto. La segunda instala las dependencias; puede tardar unos minutos. Cuando vuelva a aparecer el indicador de PowerShell, podés continuar.
 
-## Ejecutar la web
+Usamos directamente el ejecutable de `.venv`: **no hace falta activar el entorno, ejecutar Activate.ps1 ni cambiar la política de PowerShell**. Si ya creaste ese entorno en esta computadora, podés reutilizarlo e instalar las dependencias con la segunda línea.
+
+### 5. Iniciar el servidor web
+
+Desde la misma carpeta, ejecutá:
 
 ```powershell
 .\.venv\Scripts\python.exe -m uvicorn Backend.api:app --host 127.0.0.1 --port 8000
 ```
 
-Abrir [la aplicación local](http://127.0.0.1:8000/). La documentación interactiva de la API está en [API Docs](http://127.0.0.1:8000/docs). Detener con Ctrl+C. Abrir directamente un HTML desde el explorador de archivos no conecta la aplicación: hay que usar el servidor.
+Dejá esa terminal abierta. Cuando aparezcan `Application startup complete` y `Uvicorn running on http://127.0.0.1:8000`, el servidor está listo. Que la terminal quede ocupada en este punto es normal: está atendiendo la aplicación.
 
-El comando ejecuta Uvicorn con la instancia `app` de `Backend/api.py`. `127.0.0.1` es la dirección local y `8000` es el puerto. La terminal debe permanecer abierta mientras se usa la web.
+### 6. Abrir y usar la aplicación
+
+Abrí Chrome, Edge o Firefox y entrá a **[http://127.0.0.1:8000/](http://127.0.0.1:8000/)**. Desde ahí podés recorrer Inicio, Gestión, Cargas y Seguimiento. La documentación interactiva de la API está en [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs).
+
+Usá esa dirección del navegador; abrir los HTML con doble clic no inicia el servidor. `127.0.0.1` indica tu propia computadora: cada compañero debe iniciar su servidor para usar su copia del proyecto.
+
+La base SQLite y los datos de ejemplo se crean automáticamente en el primer arranque. Los cambios que hagas se conservan al cerrar y volver a abrir el programa.
+
+### 7. Detenerlo y volver a usarlo otro día
+
+Para detener el servidor, volvé a su terminal y presioná **Ctrl+C**.
+
+Para abrirlo nuevamente, entrá en la carpeta del proyecto, abrí PowerShell y repetí **solo el comando del paso 5**; después abrí la dirección del paso 6. La creación de `.venv` se hace una sola vez. Si descargás una actualización que cambie los requisitos, volvé a ejecutar la instalación de dependencias del paso 4.
+
+### Problemas frecuentes
+
+| Problema | Qué hacer |
+|---|---|
+| `py` no se reconoce o no encuentra Python 3.12 | Revisá la instalación de Python 3.12 y volvé a abrir PowerShell. Si `python --version` muestra `Python 3.12.x`, podés usar `python -m venv .venv` en el paso 4. |
+| No encuentra `requirements.txt` o `Backend.api` | Revisá la carpeta de la terminal con el paso 3: tiene que ser la raíz del proyecto. |
+| No encuentra `.venv\Scripts\python.exe` | Completá la creación del entorno del paso 4 y comprobá que estás en la carpeta correcta. Cada compañero debe crear su propio entorno. |
+| Aparece `No module named uvicorn` | Ejecutá `.\.venv\Scripts\python.exe -m pip install -r requirements.txt` y esperá a que termine sin errores. |
+| El puerto 8000 está ocupado o aparece `WinError 10048` | Si ya tenés otro servidor del proyecto abierto, detenelo con Ctrl+C. Como alternativa, cambiá `--port 8000` por `--port 8001` y entrá a `http://127.0.0.1:8001/`. |
+| El navegador no puede conectarse | Confirmá que el servidor del paso 5 siga abierto, que no haya terminado con un error y que estés usando el mismo puerto en la dirección del navegador. |
+| La pantalla muestra una versión anterior | Recargá con **Ctrl+F5** después de actualizar el proyecto. |
+
+En Linux/macOS el ejecutable equivalente del entorno es `.venv/bin/python`; los pasos anteriores están escritos para PowerShell en Windows.
+
+## Datos iniciales de la aplicación
 
 El primer arranque inicializa una base vacía con tres productos, depósitos, conductores, vehículos y pedidos en borrador. Los vehículos ya tienen conductor y los pedidos tienen un ítem cada uno. Los valores se definen al final de `Backend/schema.sql`. Los siguientes arranques conservan tus cambios: no duplican registros ni reponen stock.
 
