@@ -353,3 +353,31 @@ Las docstrings de los endpoints se publican también en `/docs`. Para consultar 
 - [Registro de verificación](docs/VERIFICACION.md): resultados y alcance de las comprobaciones de entrega.
 
 La capacidad se controla por volumen, no por peso. Cada vehículo atiende un pedido activo. Depósitos, vehículos y conductores tienen altas por consola y datos de demo; sus altas web quedan pendientes. La web permite establecer cantidades de ítems, pero no quitarlos ni editar la cabecera después de crear el borrador. No se implementan precios, rutas óptimas, entregas parciales, devoluciones, estadísticas avanzadas ni historial de horas de transición. La aplicación se entrega para uso local; no incluye autenticación ni despliegue público.
+
+## Recomendación de vehículos mediante Prolog
+
+El proyecto incorpora un motor de reglas en `Backend/razonamiento.pl`. La API
+consulta ese motor para recomendar vehículos a un pedido **Confirmado**, sin
+asignarlos automáticamente. Prolog descarta vehículos que no estén Disponibles,
+no tengan conductor, ya tengan un pedido activo o no tengan capacidad suficiente.
+Entre los compatibles prioriza el que deja menos espacio libre.
+
+### Requisito adicional
+
+Instalá **SWI-Prolog** desde https://www.swi-prolog.org/Download.html y verificá
+en una terminal que `swipl --version` responda correctamente. El ejecutable
+`swipl` debe estar en el PATH. No es un paquete de Python: se instala en el
+sistema operativo.
+
+### Uso
+
+1. Iniciá la API como siempre.
+2. Creá un pedido, agregale productos y confirmalo.
+3. Abrí `http://127.0.0.1:8000/docs`.
+4. Ejecutá `GET /pedidos/{identificador}/vehiculos-recomendados` con el ID del pedido.
+5. La respuesta muestra los vehículos compatibles ordenados por mejor ajuste.
+6. La asignación sigue siendo una acción explícita mediante `PUT /pedidos/{identificador}/vehiculo`.
+
+Si SWI-Prolog no está instalado, el endpoint responde `503` con un mensaje claro;
+el resto del sistema continúa funcionando normalmente. Esta separación permite
+que Python coordine la aplicación y Prolog resuelva las reglas declarativas.

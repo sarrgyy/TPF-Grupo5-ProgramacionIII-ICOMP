@@ -21,6 +21,7 @@ from .flota import FlotaSQLite
 from .main import RUTA_DB_POR_DEFECTO, cargar_datos_base
 from .modelos.productos import Producto
 from .pedidos import PedidosSQLite, StockInsuficiente
+from .prolog import PrologNoDisponible, recomendar_vehiculos
 from .persistencia import InventarioSQLite
 
 Identificador = Annotated[str, StringConstraints(min_length=1, max_length=64, pattern=r"^[A-Za-z0-9_-]+$")]
@@ -455,6 +456,24 @@ def create_app(ruta_db: str | Path | None = None, *, cargar_base: bool = True) -
             dict[str, object]: Pedido serializado después de la transición.
         """
         return transicion(identificador, "entregar")
+
+    @app.get("/pedidos/{identificador}/vehiculos-recomendados")
+    def vehiculos_recomendados(identificador: str):
+        """Recomienda con Prolog vehículos aptos para un pedido Confirmado."""
+        with InventarioSQLite(ruta) as inv:
+            repo = PedidosSQLite(inv)
+            exigir_pedido(repo, identificador)
+            pedido = repo.obtener_pedido(identificador)
+            if pedido.estado != "Confirmado":
+                raise HTTPException(409, detail={"mensaje": "Confirmá el pedido antes de buscar vehículos."})
+            try:
+                candidatos = recomendar_vehiculos(
+                    pedido.volumen_total, FlotaSQLite(inv).listar_vehiculos()
+                )
+            except PrologNoDisponible as error:
+                raise HTTPException(503, detail={"mensaje": str(error)}) from error
+            return {"id_pedido": identificador, "volumen_pedido": pedido.volumen_total,
+                    "motor": "SWI-Prolog", "recomendaciones": candidatos}
 
     @app.get("/vehiculos")
     def vehiculos():
