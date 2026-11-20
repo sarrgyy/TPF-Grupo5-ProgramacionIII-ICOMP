@@ -1,0 +1,168 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1980" height="1540" viewBox="0 0 1980 1540" role="img" aria-labelledby="title desc">
+<title id="title">Diagrama UML de la base de datos de logistica</title>
+<desc id="desc">Nueve tablas SQLite con todos sus campos, claves y las nueve asociaciones por clave foranea. Detalle accesible en diagrama-base-datos.md.</desc>
+<style>text{font-family:Segoe UI,Arial,sans-serif;fill:#1c2c40}.field{font-family:Consolas,monospace;font-size:18px}.card-title{font-size:25px;font-weight:600}.small{font-size:17px;fill:#53657c}.mult{font-size:20px;font-weight:600}</style>
+<rect width="1980" height="1540" fill="#f5f7fb"/>
+<text x="60" y="52" font-size="34" font-weight="700">Base de datos · Diagrama UML</text>
+<text x="60" y="86" font-size="20" fill="#53657c">Gestión logística · SQLite · 9 tablas · Esquema y migraciones del proyecto · 18/11/2026</text>
+<polyline points="500,240 690,240" fill="none" stroke="#f5f7fb" stroke-width="9" stroke-linejoin="round"/>
+<polyline points="500,240 690,240" fill="none" stroke="#2366a3" stroke-width="2.5" stroke-linejoin="round"/>
+<rect x="514" y="203" width="25" height="29" rx="5" fill="#f5f7fb"/>
+<text class="mult" x="520" y="224">1</text>
+<rect x="622" y="203" width="64" height="29" rx="5" fill="#f5f7fb"/>
+<text class="mult" x="628" y="224">0..*</text>
+<polyline points="500,700 610,700 610,365 690,365" fill="none" stroke="#f5f7fb" stroke-width="9" stroke-linejoin="round"/>
+<polyline points="500,700 610,700 610,365 690,365" fill="none" stroke="#18786b" stroke-width="2.5" stroke-linejoin="round"/>
+<rect x="513" y="664" width="25" height="29" rx="5" fill="#f5f7fb"/>
+<text class="mult" x="519" y="685">1</text>
+<rect x="622" y="328" width="64" height="29" rx="5" fill="#f5f7fb"/>
+<text class="mult" x="628" y="349">0..*</text>
+<polyline points="500,325 555,325 555,600 835,600 835,650" fill="none" stroke="#f5f7fb" stroke-width="9" stroke-linejoin="round"/>
+<polyline points="500,325 555,325 555,600 835,600 835,650" fill="none" stroke="#2366a3" stroke-width="2.5" stroke-linejoin="round"/>
+<rect x="512" y="288" width="25" height="29" rx="5" fill="#f5f7fb"/>
+<text class="mult" x="518" y="309">1</text>
+<rect x="844" y="614" width="64" height="29" rx="5" fill="#f5f7fb"/>
+<text class="mult" x="850" y="635">0..*</text>
+<polyline points="500,400 525,400 525,500 1255,500 1255,710 1320,710" fill="none" stroke="#f5f7fb" stroke-width="9" stroke-linejoin="round"/>
+<polyline points="500,400 525,400 525,500 1255,500 1255,710 1320,710" fill="none" stroke="#2366a3" stroke-width="2.5" stroke-linejoin="round"/>
+<rect x="499" y="411" width="25" height="29" rx="5" fill="#f5f7fb"/>
+<text class="mult" x="505" y="432">1</text>
+<rect x="1252" y="673" width="64" height="29" rx="5" fill="#f5f7fb"/>
+<text class="mult" x="1258" y="694">0..*</text>
+<polyline points="500,790 690,790" fill="none" stroke="#f5f7fb" stroke-width="9" stroke-linejoin="round"/>
+<polyline points="500,790 690,790" fill="none" stroke="#18786b" stroke-width="2.5" stroke-linejoin="round"/>
+<rect x="514" y="753" width="25" height="29" rx="5" fill="#f5f7fb"/>
+<text class="mult" x="520" y="774">1</text>
+<rect x="622" y="753" width="64" height="29" rx="5" fill="#f5f7fb"/>
+<text class="mult" x="628" y="774">0..*</text>
+<polyline points="500,865 580,865 580,970 1255,970 1255,845 1320,845" fill="none" stroke="#f5f7fb" stroke-width="9" stroke-linejoin="round"/>
+<polyline points="500,865 580,865 580,970 1255,970 1255,845 1320,845" fill="none" stroke="#18786b" stroke-width="2.5" stroke-linejoin="round"/>
+<rect x="512" y="829" width="25" height="29" rx="5" fill="#f5f7fb"/>
+<text class="mult" x="518" y="850">1</text>
+<rect x="1252" y="808" width="64" height="29" rx="5" fill="#f5f7fb"/>
+<text class="mult" x="1258" y="829">0..*</text>
+<polyline points="1560,550 1560,650" fill="none" stroke="#f5f7fb" stroke-width="9" stroke-linejoin="round"/>
+<polyline points="1560,550 1560,650" fill="none" stroke="#7352a0" stroke-width="2.5" stroke-linejoin="round"/>
+<rect x="1569" y="556" width="25" height="29" rx="5" fill="#f5f7fb"/>
+<text class="mult" x="1575" y="577">1</text>
+<rect x="1569" y="614" width="64" height="29" rx="5" fill="#f5f7fb"/>
+<text class="mult" x="1575" y="635">0..*</text>
+<polyline points="1800,1210 1830,1210 1830,420 1800,420" fill="none" stroke="#f5f7fb" stroke-width="9" stroke-linejoin="round"/>
+<polyline points="1800,1210 1830,1210 1830,420 1800,420" fill="none" stroke="#ae632b" stroke-width="2.5" stroke-linejoin="round"/>
+<rect x="1840" y="1169" width="64" height="29" rx="5" fill="#f5f7fb"/>
+<text class="mult" x="1846" y="1190">0..1</text>
+<rect x="1840" y="434" width="64" height="29" rx="5" fill="#f5f7fb"/>
+<text class="mult" x="1846" y="455">0..*</text>
+<polyline points="1130,1180 1320,1180" fill="none" stroke="#f5f7fb" stroke-width="9" stroke-linejoin="round"/>
+<polyline points="1130,1180 1320,1180" fill="none" stroke="#ae632b" stroke-width="2.5" stroke-linejoin="round"/>
+<rect x="1139" y="1142" width="64" height="29" rx="5" fill="#f5f7fb"/>
+<text class="mult" x="1145" y="1163">0..1</text>
+<rect x="1241" y="1142" width="64" height="29" rx="5" fill="#f5f7fb"/>
+<text class="mult" x="1247" y="1163">0..1</text>
+<g id="productos">
+<rect x="60" y="184" width="440" height="250" rx="9" fill="#dce3ed" opacity="0.65"/>
+<rect x="60" y="180" width="440" height="250" rx="9" fill="white" stroke="#2366a3" stroke-width="2"/>
+<path d="M 69,180 H 491 Q 500,180 500,189 V 256 H 60 V 189 Q 60,180 69,180" fill="#2366a3"/>
+<text x="80" y="206" style="fill:white;font-size:16px">&lt;&lt;table&gt;&gt; · Inventario</text>
+<text class="card-title" x="80" y="237" style="fill:white">productos</text>
+<text class="field" x="80" y="291">id_producto : TEXT [PK]</text>
+<text class="field" x="80" y="320">nombre : TEXT</text>
+<text class="field" x="80" y="349">volumen_unitario : REAL</text>
+<text class="field" x="80" y="378">peso_unitario : REAL</text>
+</g>
+<g id="existencias">
+<rect x="690" y="184" width="440" height="220" rx="9" fill="#dce3ed" opacity="0.65"/>
+<rect x="690" y="180" width="440" height="220" rx="9" fill="white" stroke="#2366a3" stroke-width="2"/>
+<path d="M 699,180 H 1121 Q 1130,180 1130,189 V 256 H 690 V 189 Q 690,180 699,180" fill="#2366a3"/>
+<text x="710" y="206" style="fill:white;font-size:16px">&lt;&lt;table&gt;&gt; · Inventario</text>
+<text class="card-title" x="710" y="237" style="fill:white">existencias</text>
+<text class="field" x="710" y="291">id_deposito : TEXT [PK, FK]</text>
+<text class="field" x="710" y="320">id_producto : TEXT [PK, FK]</text>
+<text class="field" x="710" y="349">cantidad : INTEGER</text>
+</g>
+<g id="pedidos">
+<rect x="1320" y="124" width="480" height="430" rx="9" fill="#dce3ed" opacity="0.65"/>
+<rect x="1320" y="120" width="480" height="430" rx="9" fill="white" stroke="#7352a0" stroke-width="2"/>
+<path d="M 1329,120 H 1791 Q 1800,120 1800,129 V 196 H 1320 V 129 Q 1320,120 1329,120" fill="#7352a0"/>
+<text x="1340" y="146" style="fill:white;font-size:16px">&lt;&lt;table&gt;&gt; · Pedidos</text>
+<text class="card-title" x="1340" y="177" style="fill:white">pedidos</text>
+<text class="field" x="1340" y="231">id_pedido : TEXT [PK]</text>
+<text class="field" x="1340" y="260">cliente : TEXT</text>
+<text class="field" x="1340" y="289">destino : TEXT</text>
+<text class="field" x="1340" y="318">prioridad : INTEGER</text>
+<text class="field" x="1340" y="347">hora_inicio : TEXT?</text>
+<text class="field" x="1340" y="376">hora_fin : TEXT?</text>
+<text class="field" x="1340" y="405">observaciones : TEXT?</text>
+<text class="field" x="1340" y="434">estado : TEXT</text>
+<text class="field" x="1340" y="463">patente_vehiculo : TEXT? [FK]</text>
+<text class="field" x="1340" y="492">creado_en : TEXT</text>
+</g>
+<g id="depositos">
+<rect x="60" y="654" width="440" height="250" rx="9" fill="#dce3ed" opacity="0.65"/>
+<rect x="60" y="650" width="440" height="250" rx="9" fill="white" stroke="#18786b" stroke-width="2"/>
+<path d="M 69,650 H 491 Q 500,650 500,659 V 726 H 60 V 659 Q 60,650 69,650" fill="#18786b"/>
+<text x="80" y="676" style="fill:white;font-size:16px">&lt;&lt;table&gt;&gt; · Inventario</text>
+<text class="card-title" x="80" y="707" style="fill:white">depositos</text>
+<text class="field" x="80" y="761">id_deposito : TEXT [PK]</text>
+<text class="field" x="80" y="790">nombre : TEXT</text>
+<text class="field" x="80" y="819">ubicacion : TEXT</text>
+<text class="field" x="80" y="848">capacidad_maxima : REAL</text>
+</g>
+<g id="ingresos_stock">
+<rect x="690" y="654" width="440" height="250" rx="9" fill="#dce3ed" opacity="0.65"/>
+<rect x="690" y="650" width="440" height="250" rx="9" fill="white" stroke="#2366a3" stroke-width="2"/>
+<path d="M 699,650 H 1121 Q 1130,650 1130,659 V 726 H 690 V 659 Q 690,650 699,650" fill="#2366a3"/>
+<text x="710" y="676" style="fill:white;font-size:16px">&lt;&lt;table&gt;&gt; · Inventario</text>
+<text class="card-title" x="710" y="707" style="fill:white">ingresos_stock</text>
+<text class="field" x="710" y="761">clave : TEXT [PK]</text>
+<text class="field" x="710" y="790">id_deposito : TEXT [FK]</text>
+<text class="field" x="710" y="819">id_producto : TEXT [FK]</text>
+<text class="field" x="710" y="848">cantidad : INTEGER</text>
+</g>
+<g id="pedido_items">
+<rect x="1320" y="654" width="480" height="250" rx="9" fill="#dce3ed" opacity="0.65"/>
+<rect x="1320" y="650" width="480" height="250" rx="9" fill="white" stroke="#7352a0" stroke-width="2"/>
+<path d="M 1329,650 H 1791 Q 1800,650 1800,659 V 726 H 1320 V 659 Q 1320,650 1329,650" fill="#7352a0"/>
+<text x="1340" y="676" style="fill:white;font-size:16px">&lt;&lt;table&gt;&gt; · Pedidos</text>
+<text class="card-title" x="1340" y="707" style="fill:white">pedido_items</text>
+<text class="field" x="1340" y="761">id_pedido : TEXT [PK, FK]</text>
+<text class="field" x="1340" y="790">id_deposito : TEXT [PK, FK]</text>
+<text class="field" x="1340" y="819">id_producto : TEXT [PK, FK]</text>
+<text class="field" x="1340" y="848">cantidad : INTEGER</text>
+</g>
+<g id="inicializaciones">
+<rect x="60" y="1084" width="440" height="190" rx="9" fill="#dce3ed" opacity="0.65"/>
+<rect x="60" y="1080" width="440" height="190" rx="9" fill="white" stroke="#596779" stroke-width="2"/>
+<path d="M 69,1080 H 491 Q 500,1080 500,1089 V 1156 H 60 V 1089 Q 60,1080 69,1080" fill="#596779"/>
+<text x="80" y="1106" style="fill:white;font-size:16px">&lt;&lt;table&gt;&gt; · Control interno</text>
+<text class="card-title" x="80" y="1137" style="fill:white">inicializaciones</text>
+<text class="field" x="80" y="1191">nombre : TEXT [PK]</text>
+<text class="field" x="80" y="1220">aplicado_en : TEXT</text>
+</g>
+<g id="conductores">
+<rect x="690" y="1084" width="440" height="220" rx="9" fill="#dce3ed" opacity="0.65"/>
+<rect x="690" y="1080" width="440" height="220" rx="9" fill="white" stroke="#ae632b" stroke-width="2"/>
+<path d="M 699,1080 H 1121 Q 1130,1080 1130,1089 V 1156 H 690 V 1089 Q 690,1080 699,1080" fill="#ae632b"/>
+<text x="710" y="1106" style="fill:white;font-size:16px">&lt;&lt;table&gt;&gt; · Flota</text>
+<text class="card-title" x="710" y="1137" style="fill:white">conductores</text>
+<text class="field" x="710" y="1191">dni : TEXT [PK]</text>
+<text class="field" x="710" y="1220">nombre : TEXT</text>
+<text class="field" x="710" y="1249">estado : TEXT</text>
+</g>
+<g id="vehiculos">
+<rect x="1320" y="1084" width="480" height="250" rx="9" fill="#dce3ed" opacity="0.65"/>
+<rect x="1320" y="1080" width="480" height="250" rx="9" fill="white" stroke="#ae632b" stroke-width="2"/>
+<path d="M 1329,1080 H 1791 Q 1800,1080 1800,1089 V 1156 H 1320 V 1089 Q 1320,1080 1329,1080" fill="#ae632b"/>
+<text x="1340" y="1106" style="fill:white;font-size:16px">&lt;&lt;table&gt;&gt; · Flota</text>
+<text class="card-title" x="1340" y="1137" style="fill:white">vehiculos</text>
+<text class="field" x="1340" y="1191">patente : TEXT [PK]</text>
+<text class="field" x="1340" y="1220">capacidad_maxima : REAL</text>
+<text class="field" x="1340" y="1249">estado : TEXT</text>
+<text class="field" x="1340" y="1278">dni_conductor : TEXT? [FK, UQ]</text>
+</g>
+<rect x="60" y="1380" width="1800" height="120" rx="10" fill="#e9eef6"/>
+<text x="80" y="1411" font-size="19" font-weight="600">PK: primaria · FK: foránea · UQ: única · ?: admite NULL · Varios PK en una tabla = clave compuesta</text>
+<text x="80" y="1443" font-size="19">1: exactamente uno · 0..1: opcional, máximo uno · 0..*: cero o muchos · Las líneas representan claves foráneas.</text>
+<text x="80" y="1475" font-size="19">Vehículo: muchos pedidos históricos; máximo un pedido activo (Confirmado o Despachado) por índice único parcial.</text>
+<text x="60" y="1526" class="small">Fuente: Backend/schema.sql + Backend/persistencia.py · inicializaciones se crea al cargar datos base · Reservas y entregas no tienen tabla propia.</text>
+</svg>
