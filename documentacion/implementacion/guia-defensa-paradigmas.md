@@ -4,7 +4,7 @@
 
 ## Referencia que ya existe en el proyecto
 
-El [Informe del proyecto](../../Informe.md), en la sección **Paradigmas de programación**, identifica cuatro paradigmas o estilos: orientado a objetos, imperativo, funcional y declarativo. El [README principal](../../README.md) remite a ese informe. También aparecen mencionados en la guía de tecnologías.
+El [Informe del proyecto](../../Informe.md), en la sección **Paradigmas de programación**, identifica cinco paradigmas o estilos: orientado a objetos, imperativo, funcional, declarativo y lógico. El [README principal](../../README.md) remite a ese informe. También aparecen mencionados en la guía de tecnologías.
 
 Esta guía amplía esa explicación con evidencia del código y frases para la defensa. Se trata de una aplicación **multiparadigma**: combina distintos enfoques según la tarea. Estas categorías no son excluyentes: un método de una clase puede contener instrucciones imperativas y ejecutar una consulta declarativa.
 
@@ -18,6 +18,7 @@ Un paradigma es una forma de organizar y expresar una solución. Python y JavaSc
 | Imperativo | Indicar una secuencia explícita de pasos y cambios de estado. | `PedidosSQLite.despachar`: validación, cambio de estado, recorrido de ítems, descuento de stock y actualización del vehículo. |
 | Funcional, aplicado parcialmente | Pasar funciones como argumentos y transformar colecciones. | `sorted` con `key=lambda` en la API; `filter` y `map` en el frontend. |
 | Declarativo | Describir qué resultado o restricción se necesita. | Consultas SQL con `SELECT`, `JOIN` y `GROUP BY`; restricciones `CHECK`, claves foráneas e índices únicos. |
+| Lógico | Expresar hechos y reglas, y dejar que un motor de inferencia encuentre las soluciones. | `Backend/razonamiento.pl`: hechos `vehiculo/5` y regla `candidato/4`, consultados desde `Backend/prolog.py`. |
 
 ## 1. Programación orientada a objetos
 
@@ -206,9 +207,42 @@ Permite describir consultas y restricciones de manera cercana a los datos, deleg
 
 > Usamos programación declarativa en SQL: indicamos qué registros necesitamos y qué restricciones deben cumplir, mientras SQLite resuelve la consulta y aplica esas restricciones.
 
+## 5. Programación lógica
+
+### Qué significa
+
+Se declaran **hechos** (lo que se sabe) y **reglas** (cuándo algo se cumple), y se hace una consulta. El motor de inferencia busca todas las combinaciones que satisfacen las reglas; no se escribe el recorrido paso a paso.
+
+### Cómo se implementa
+
+En [razonamiento.pl](../../Backend/razonamiento.pl), cada vehículo se carga como un hecho `vehiculo(Patente, Capacidad, Estado, TieneConductor, TienePedidoActivo)`. La regla que define qué vehículo sirve para un pedido es:
+
+```prolog
+candidato(VolumenPedido, Patente, Capacidad, Restante) :-
+    vehiculo(Patente, Capacidad, "Disponible", true, false),
+    Capacidad >= VolumenPedido,
+    Restante is Capacidad - VolumenPedido.
+```
+
+Un vehículo es candidato si está Disponible, tiene conductor, no tiene pedido activo y su capacidad alcanza. `findall` reúne todos los candidatos y `predsort` los ordena por menor espacio sobrante.
+
+Python participa a través de [prolog.py](../../Backend/prolog.py): arma un JSON con el volumen y la flota, ejecuta `swipl` como subproceso, y recibe la lista de recomendaciones también en JSON. El endpoint `GET /pedidos/{id}/vehiculos-recomendados` de la API lo usa para pedidos Confirmados. Recomendar no asigna: la asignación sigue siendo explícita.
+
+### Qué beneficio aporta
+
+Las condiciones de compatibilidad quedan escritas como una regla legible y separada del resto del código. Agregar una condición es agregar un objetivo a la regla.
+
+### Límites
+
+Depende de tener SWI-Prolog instalado; sin él, el endpoint responde 503. La interfaz web no consume todavía este endpoint. Se invoca un proceso por consulta, algo aceptable para una demostración local.
+
+### Cómo decirlo
+
+> Usamos programación lógica para recomendar vehículos: declaramos en Prolog qué condiciones debe cumplir un vehículo y el motor encuentra cuáles las cumplen. Python le pasa los datos y recibe el resultado, pero la decisión de asignar sigue siendo explícita.
+
 ## Estilos complementarios: eventos y asincronía
 
-Además de los cuatro enfoques del informe, el frontend está dirigido por eventos. En [gestion.js](../../Frontend/gestion.js):
+Además de los enfoques del informe, el frontend está dirigido por eventos. En [gestion.js](../../Frontend/gestion.js):
 
 ```javascript
 byId("buscar-producto").addEventListener("input", mostrarInventario);
@@ -249,7 +283,7 @@ No es necesario que cada operación use todos los paradigmas ni que cada archivo
 
 ## Guion oral
 
-> El proyecto es multiparadigma. Usamos orientación a objetos para representar productos, pedidos y vehículos, y para agrupar operaciones en repositorios. El estilo imperativo aparece en procesos como el despacho, donde validamos condiciones y actualizamos stock y estados en un orden explícito. Aplicamos estilo funcional al ordenar pedidos con sorted y lambda y al filtrar o transformar datos con filter y map en JavaScript. El enfoque declarativo aparece en las consultas y restricciones SQL. Además, la interfaz responde a eventos y utiliza asincronía para comunicarse con la API.
+> El proyecto es multiparadigma. Usamos orientación a objetos para representar productos, pedidos y vehículos, y para agrupar operaciones en repositorios. El estilo imperativo aparece en procesos como el despacho, donde validamos condiciones y actualizamos stock y estados en un orden explícito. Aplicamos estilo funcional al ordenar pedidos con sorted y lambda y al filtrar o transformar datos con filter y map en JavaScript. El enfoque declarativo aparece en las consultas y restricciones SQL, y el lógico en las reglas Prolog que recomiendan vehículos. Además, la interfaz responde a eventos y utiliza asincronía para comunicarse con la API.
 
 ## Fuentes y alcance de la revisión
 
@@ -259,6 +293,7 @@ No es necesario que cada operación use todos los paradigmas ni que cada archivo
 - [Persistencia: consultas y reservas](../../Backend/persistencia.py).
 - [API: ordenamiento y modelos de entrada](../../Backend/api.py).
 - [SQL: relaciones y restricciones](../../Backend/schema.sql).
+- [Reglas Prolog](../../Backend/razonamiento.pl) y [puente Python-Prolog](../../Backend/prolog.py).
 - [JavaScript: filtros, transformaciones y eventos](../../Frontend/gestion.js) y [comunicación asíncrona](../../Frontend/api.js).
 
 La clasificación se contrastó mediante lectura del código y de la documentación. No se modificó el comportamiento del sistema ni se ejecutaron pruebas funcionales para generar esta guía.

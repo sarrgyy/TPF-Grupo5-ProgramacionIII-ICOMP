@@ -1,6 +1,6 @@
 # Verificación ampliada de funciones
 
-Pruebas realizadas en Windows, Python 3.12.3 y Chromium. La ampliación del 18 de noviembre de 2026 aprobó **290 casos: 271 de backend/consola/API y 19 de navegador**, sin fallos, errores ni pruebas omitidas. La verificación anterior, del 17 de noviembre, había aprobado 280 casos; una copia independiente con su entorno virtual ejecutó entonces 267 pruebas de backend/consola/API, con las 13 de navegador excluidas explícitamente.
+Pruebas realizadas en Windows, Python 3.12.3 y Chromium. La ampliación del 18 de noviembre de 2026 aprobó **290 casos: 271 de backend/consola/API y 19 de navegador**. El 19 de noviembre se sumaron tres pruebas de la recomendación con Prolog (una exige SWI-Prolog instalado) y la suite de backend/consola/API quedó en 274 casos; las de navegador no se volvieron a ejecutar, sin fallos, errores ni pruebas omitidas. La verificación anterior, del 17 de noviembre, había aprobado 280 casos; una copia independiente con su entorno virtual ejecutó entonces 267 pruebas de backend/consola/API, con las 13 de navegador excluidas explícitamente.
 
 ## Cobertura medida
 

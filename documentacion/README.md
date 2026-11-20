@@ -19,8 +19,8 @@ Las explicaciones sobre cómo está construido el sistema están en [`implementa
 
 | Documento | Contenido |
 |---|---|
-| [Guía para defender las tecnologías](implementacion/guia-defensa-tecnologias.md) | Qué usamos, para qué sirve, qué hace y cómo justificar cada elección: Python, HTML, CSS, JavaScript, FastAPI, Pydantic, Uvicorn, SQLite, SQL y herramientas de pruebas. Incluye el recorrido de una solicitud y un guion oral. |
-| [Guía para defender los paradigmas](implementacion/guia-defensa-paradigmas.md) | Orientación a objetos, estilo imperativo, funcional y declarativo, con ejemplos del código, eventos, asincronía, preguntas posibles y guion oral. |
+| [Guía para defender las tecnologías](implementacion/guia-defensa-tecnologias.md) | Qué usamos, para qué sirve, qué hace y cómo justificar cada elección: Python, HTML, CSS, JavaScript, FastAPI, Pydantic, Uvicorn, SQLite, SQL, SWI-Prolog y herramientas de pruebas. Incluye el recorrido de una solicitud y un guion oral. |
+| [Guía para defender los paradigmas](implementacion/guia-defensa-paradigmas.md) | Orientación a objetos, estilo imperativo, funcional, declarativo y lógico, con ejemplos del código, eventos, asincronía, preguntas posibles y guion oral. |
 
 ## Orden sugerido para preparar la defensa
 

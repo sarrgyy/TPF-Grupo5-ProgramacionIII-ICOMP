@@ -21,6 +21,7 @@ El recorrido de una operación es interfaz → API → repositorio → SQLite. L
 | Backend/pedidos.py | Coordinar estados, reservas, asignación, despacho y entrega |
 | Backend/flota.py | Administrar vehículos, conductores y sus relaciones |
 | Backend/api.py | Validar solicitudes HTTP, traducir errores y serializar resultados |
+| Backend/prolog.py y razonamiento.pl | Recomendar vehículos compatibles con un pedido mediante reglas en SWI-Prolog |
 | Backend/main.py y consola.py | Arranque, datos iniciales y operación por terminal |
 | Frontend/api.js | Comunicación HTTP y presentación de errores |
 | Frontend/gestion.js, carga.js, seguimiento.js y app.js | Interacción y presentación de datos reales |
@@ -63,6 +64,9 @@ Los objetos devueltos por los repositorios son copias para consulta: modificar s
 | Imperativo | Secuencia de validación y actualizaciones de PedidosSQLite.despachar y entregar; coordinación explícita de operaciones en la consola |
 | Funcional | sorted con una función lambda en el listado de pedidos de Backend/api.py crea una lista ordenada sin mutar la original; filter y map en Frontend/gestion.js y carga.js seleccionan y transforman colecciones |
 | Declarativo | SELECT, JOIN y GROUP BY describen consultas; CHECK, claves foráneas e índice único parcial expresan restricciones del dominio en schema.sql y la migración |
+| Lógico | Backend/razonamiento.pl declara hechos `vehiculo/5` y la regla `candidato/4`; Prolog encuentra los vehículos que la cumplen y Python los recibe por JSON desde Backend/prolog.py |
+
+La parte lógica es acotada: Prolog solo recomienda vehículos para un pedido Confirmado (GET /pedidos/{id}/vehiculos-recomendados) y no asigna nada; la asignación sigue siendo una acción explícita. Requiere SWI-Prolog instalado; si falta, el endpoint responde 503 y el resto del sistema funciona. La interfaz web todavía no consume este endpoint, que se prueba desde /docs.
 
 Python concentra el modelado y las transacciones; JavaScript aporta eventos, asincronía e interacción con el DOM. El uso de filter o sorted constituye una aplicación de estilo funcional dentro de una aplicación multiparadigma, no una afirmación de que toda la solución sea funcional pura.
 

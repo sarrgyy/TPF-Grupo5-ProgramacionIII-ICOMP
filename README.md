@@ -291,7 +291,7 @@ Backend, modelos, persistencia, consola, migraciones y API:
 
 Las pruebas crean bases temporales y no usan la base de trabajo. Incluyen faltantes sin reservas parciales, cancelación, reservas protegidas, vehículo ocupado, rollback, despacho repetido, concurrencia y reapertura.
 
-La última verificación funcional aprobó **290 casos: 271 de backend/consola/API y 19 de navegador**. La cobertura Python fue **99,89% de líneas y 99,14% de ramas**, con las 130 funciones y métodos identificados ejercitados. Los resultados y los límites de la medición están en [Pruebas exhaustivas](docs/PRUEBAS_EXHAUSTIVAS.md).
+La última verificación funcional aprobó **274 casos de backend/consola/API (19/11, con SWI-Prolog instalado) y 19 de navegador (18/11)**. La cobertura Python fue **99,89% de líneas y 99,14% de ramas**, con las 130 funciones y métodos identificados ejercitados. Los resultados y los límites de la medición están en [Pruebas exhaustivas](docs/PRUEBAS_EXHAUSTIVAS.md).
 
 Para verificar también la web en Chromium sin interfaz visible:
 

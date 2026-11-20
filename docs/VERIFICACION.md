@@ -6,7 +6,8 @@ Verificación inicial del 17 de noviembre de 2026 y actualización final del 18 
 
 | Comprobación | Resultado |
 |---|---|
-| Suite completa con Chromium | 290 pruebas aprobadas: 271 de backend/consola/API y 19 de navegador |
+| Suite completa con Chromium (18/11) | 290 pruebas aprobadas: 271 de backend/consola/API y 19 de navegador |
+| Backend/consola/API tras incorporar Prolog (19/11) | 274 pruebas aprobadas, con SWI-Prolog instalado; sin él, la prueba del motor real se omite |
 | Backend/API en copia limpia y entorno virtual nuevo | 267 aprobadas; 13 pruebas de navegador excluidas explícitamente |
 | Dependencias, `python -m pip check` | Sin incompatibilidades en ambos entornos |
 | Sintaxis de los cinco scripts JavaScript, `node --check` | Correcta |

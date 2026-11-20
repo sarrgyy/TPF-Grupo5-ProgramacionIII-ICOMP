@@ -4,7 +4,7 @@
 
 ## Explicación inicial
 
-> Implementamos una aplicación por capas. El frontend utiliza HTML, CSS y JavaScript para presentar las pantallas e interactuar con el usuario. El backend está desarrollado en Python y contiene las reglas del negocio. FastAPI expone esas operaciones mediante una API HTTP, que ejecutamos con Uvicorn. La información se guarda en SQLite y la consultamos con SQL mediante el módulo sqlite3 de Python.
+> Implementamos una aplicación por capas. El frontend utiliza HTML, CSS y JavaScript para presentar las pantallas e interactuar con el usuario. El backend está desarrollado en Python y contiene las reglas del negocio. FastAPI expone esas operaciones mediante una API HTTP, que ejecutamos con Uvicorn. La información se guarda en SQLite y la consultamos con SQL mediante el módulo sqlite3 de Python. Un motor de reglas en SWI-Prolog recomienda vehículos para los pedidos confirmados.
 
 Las tecnologías y los usos de esta guía se verificaron en el código y en los archivos de dependencias. Los motivos de elección se presentan como **justificaciones técnicas coherentes con la implementación**, no como un registro de las decisiones históricas del equipo.
 
@@ -142,6 +142,16 @@ En esta implementación, la aplicación también entrega los archivos HTML, CSS 
 **Cómo justificarlo:** está incluido en Python y permite trabajar directamente con SQL. El código deja explícitas las consultas y las operaciones que deben confirmarse o revertirse juntas. Los valores se pasan como parámetros a las consultas.
 
 **Frase para la defensa:** “SQLite es la base; sqlite3 es el módulo que nos permite utilizarla desde Python”.
+
+### SWI-Prolog: motor de reglas para recomendar vehículos
+
+**Para qué lo usamos:** decidir qué vehículos son compatibles con un pedido Confirmado.
+
+**Qué hace en este proyecto:** `Backend/razonamiento.pl` define la regla de compatibilidad (Disponible, con conductor, sin pedido activo y con capacidad suficiente) y ordena los candidatos por menor espacio sobrante. `Backend/prolog.py` ejecuta `swipl` como subproceso, le envía los datos en JSON y lee la respuesta. La API la expone en `GET /pedidos/{id}/vehiculos-recomendados`.
+
+**Cómo justificarlo:** las reglas de compatibilidad se escriben de forma declarativa y quedan separadas de la lógica transaccional. Es un componente opcional: si SWI-Prolog no está instalado, ese endpoint responde 503 y el resto del sistema sigue funcionando.
+
+**Frase para la defensa:** “Python coordina la aplicación y Prolog resuelve las reglas de compatibilidad; recomendar no asigna, eso sigue siendo explícito”.
 
 ## Comunicación: HTTP, JSON y fetch
 
